@@ -1,0 +1,8 @@
+Sub breaklink()
+Dim aLinksArray As Variant
+    aLinksArray = ActiveWorkbook.LinkSources(Type:=xlLinkTypeExcelLinks)
+    Do Until IsEmpty(aLinksArray)
+        ActiveWorkbook.breaklink Name:=aLinksArray(1), Type:=xlLinkTypeExcelLinks
+        aLinksArray = ActiveWorkbook.LinkSources(Type:=xlLinkTypeExcelLinks)
+    Loop
+End Sub
