@@ -1,6 +1,6 @@
 Sub hide_sheet()
     Dim ws As Worksheet
-    Dim mode As VbSheetVisibility
+    Dim mode As XlSheetVisibility
 
     Set ws = ActiveSheet
 
