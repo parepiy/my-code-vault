@@ -11,13 +11,26 @@ RemovedName = Table.RemoveColumns(Expanded, {"Name"}),
 SkippedTop = Table.Skip(RemovedName, 1),
 Promoted = Table.PromoteHeaders(SkippedTop, [PromoteAllScalars=true]),
 
+MergedBrick =
+    Table.NestedJoin(Promoted, {"Product"}, shelf_life, {"ARTICLE NUMBER"}, "brick", JoinKind.LeftOuter),
+ExpandedBrick =
+    Table.ExpandTableColumn(MergedBrick, "brick", {"MDSE CAT."," อายุก่อนรับเข้าคลัง", "อายุสินค้าเต็ม"}, {"MDSE CAT.","min_shelf_life", "shelf_life"}),
+
+// =====================================================
+// look up family using cat code and sub cat code
+// =====================================================
+FamBuff = Table.Buffer(cj_cat),
+MergedFam =
+    Table.NestedJoin(ExpandedBrick, {"MDSE CAT."}, FamBuff, {"sub_category_code"}, "family", JoinKind.LeftOuter),
+ExpandedFam = Table.ExpandTableColumn(MergedFam, "family", {"family_name", "category_name", "sub_category_name"}, {"family_name", "category_name", "sub_category_name"}),
+
 // =====================================================
 // BASIC CLEAN
 // =====================================================
 RemovedCols =
     Table.RemoveColumns(
-        Promoted,
-        {"DIVISION Name", "Category", "Sub Category", "Status"}
+        ExpandedFam,
+        {"DIVISION Name", "Category","Category Name", "Sub Category","Sub Category Name", "Status","MDSE CAT."}
     ),
 Dedup = Table.Distinct(RemovedCols, {"Product"}),
 
@@ -141,20 +154,12 @@ FilteredStatus =
     ),
 
 // =====================================================
-// MERGE SHELF LIFE
-// =====================================================
-MergedShelf =
-    Table.NestedJoin(FilteredStatus, {"Product"}, shelf_life, {"ARTICLE NUMBER"}, "shelf", JoinKind.LeftOuter),
-ExpandedShelf =
-    Table.ExpandTableColumn(MergedShelf, "shelf", {" อายุก่อนรับเข้าคลัง", "อายุสินค้าเต็ม"}, {"min_shelf_life", "shelf_life"}),
-
-// =====================================================
 // MERGE PICKING
 // =====================================================
 PickingBuff = Table.Buffer(cj_picking),
 MergedPicking =
     Table.NestedJoin(
-        ExpandedShelf,
+        FilteredStatus,
         {"Product"},
         PickingBuff,
         {"ARTICLE NUMBER"},
@@ -233,7 +238,7 @@ AddedAssort =
 // REORDER (DYNAMIC + SAFE)
 // =====================================================
 fixed_col1 = {
-    "CJX Division","Product","Product Name","Category Name","Sub Category Name",
+    "CJX Division","Product","Product Name","family_name","category_name","sub_category_name",
     "Supplier","Supplier Name","Old Status","Tax",
     "GTIN(S)","GTIN(M)","GTIN(L)",
     "Sales price (S)","Sales price (M)","Sales price (L)",
