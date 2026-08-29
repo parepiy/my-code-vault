@@ -1,267 +1,214 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="th">
 <head>
+  <meta charset="UTF-8">
   <base target="_top">
-  <meta charset="utf-8">
   <style>
-    :root {
-      --bg: #0f0f0f;
-      --panel: #171717;
-      --panel-2: #1e1e1e;
-      --border: #2a2a2a;
-      --text: #ececec;
-      --muted: #8a8a8a;
-      --gold: #e7c65b;
-      --green: #6fcf7f;
-      --accent: #d98b6a;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-    a { color: inherit; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+           background: #0d0d0d; color: #f3ede0; padding: 0 1.5rem 2rem; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .top { position: sticky; top: 0; background: #0d0d0d; padding: .9rem 0;
+           border-bottom: 1px solid #473c1c; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; z-index: 8; }
+    h1 { font-size: 17px; font-weight: 600; white-space: nowrap;
+         background: linear-gradient(90deg, #e8c66a, #d4af37, #9a7d28);
+         -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    input, textarea, select {
+      padding: 8px 12px; border: 1px solid #473c1c; border-radius: 8px;
+      background: #141414; color: #f3ede0; font-size: 14px; outline: none; font-family: inherit; }
+    input:focus, textarea:focus, select:focus { border-color: #d4af37; }
+    #q { flex: 1; min-width: 160px; }
+    .btn { padding: 8px 14px; border: 1px solid #473c1c; border-radius: 8px;
+           background: #141414; color: #f3ede0; font-size: 14px; cursor: pointer; white-space: nowrap; }
+    .btn:hover { border-color: #d4af37; }
+    .btn.gold { background: linear-gradient(135deg, #d4af37, #b8941f); color: #1a1500; font-weight: 600; border-color: #d4af37; }
+    .btn.danger:hover { border-color: #d46a6a; color: #f0a9a9; }
 
-    /* header */
-    .top {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 20px; border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; background: var(--bg); z-index: 5;
-      flex-wrap: wrap;
-    }
-    .brand { font-weight: 700; white-space: nowrap; }
-    .brand .spark { color: var(--gold); }
-    .search {
-      flex: 1; min-width: 220px; position: relative;
-    }
-    .search input {
-      width: 100%; padding: 10px 12px 10px 34px;
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 14px; outline: none;
-    }
-    .search input:focus { border-color: #3a3a3a; }
-    .search .mag { position: absolute; left: 11px; top: 9px; opacity: .6; }
-    .btn {
-      border: 1px solid var(--border); background: var(--panel);
-      color: var(--text); border-radius: 10px; padding: 9px 12px;
-      cursor: pointer; font-size: 14px; white-space: nowrap;
-    }
-    .btn:hover { background: var(--panel-2); }
-    .btn.gold { background: var(--gold); color: #1a1a1a; border-color: var(--gold); font-weight: 600; }
-    .icon-btn { width: 40px; text-align: center; }
+    .chips { display: flex; gap: 8px; margin-top: .9rem; flex-wrap: wrap; }
+    .chip { font-size: 12.5px; color: #cfc7b5; border: 1px solid #2c2820; border-radius: 999px;
+            padding: 5px 13px; cursor: pointer; background: #141414; }
+    .chip.on { color: #e8c66a; border-color: #d4af37; background: rgba(212,175,55,.14); }
+    .cnt { color: #6b6655; font-size: 12px; margin-top: .8rem; }
 
-    /* chips */
-    .chips { display: flex; gap: 8px; padding: 12px 20px 4px; flex-wrap: wrap; }
-    .chip {
-      border: 1px solid var(--border); background: var(--panel);
-      color: var(--text); border-radius: 999px; padding: 6px 14px;
-      cursor: pointer; font-size: 13px;
-    }
-    .chip.active { background: #2f2a17; border-color: var(--gold); color: var(--gold); }
-    .chip.synced { color: var(--green); border-color: #244a2a; background: #14251a; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+             gap: 12px; margin-top: .6rem; align-items: start; }
+    .card { border: 1px solid #473c1c; border-radius: 12px;
+            background: linear-gradient(150deg, #1a1812, #141414); cursor: pointer;
+            height: 104px; display: flex; gap: 11px; padding: 14px 16px; transition: .18s; }
+    .card:hover { border-color: #d4af37; transform: translateY(-2px); }
+    .em { font-size: 26px; flex-shrink: 0; }
+    .bd { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+    .bg { font-size: 10.5px; font-weight: 600; color: #e8c66a; background: rgba(212,175,55,.14);
+          border: 1px solid #473c1c; border-radius: 8px; padding: 2px 9px; display: inline-block; margin-bottom: 6px; }
+    .tt { font-size: 13px; font-weight: 600; line-height: 1.3; overflow: hidden;
+          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .ds { font-size: 11px; color: #7a7568; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .empty { text-align: center; padding: 3rem; color: #6b6655; }
 
-    .count { padding: 8px 20px 0; color: var(--muted); font-size: 13px; }
-
-    /* grid */
-    .grid {
-      display: grid; gap: 16px; padding: 12px 20px 40px;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    }
-    .card {
-      background: var(--panel); border: 1px solid var(--border);
-      border-radius: 14px; padding: 16px; cursor: pointer;
-      display: flex; flex-direction: column; gap: 10px; min-height: 130px;
-      transition: border-color .12s, transform .12s;
-    }
-    .card:hover { border-color: #3d3d3d; transform: translateY(-2px); }
-    .card .row1 { display: flex; align-items: center; gap: 10px; }
-    .card .emoji { font-size: 22px; line-height: 1; }
-    .badge {
-      font-size: 11px; padding: 3px 9px; border-radius: 999px;
-      background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
-    }
-    .badge.BigQuery { color: #7db6f5; }
-    .badge.VBA { color: #c58bf0; }
-    .badge.PowerQuery { color: var(--green); }
-    .card h3 { margin: 0; font-size: 15px; font-weight: 600; }
-    .card p { margin: 0; color: var(--muted); font-size: 12.5px;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-    .empty, .loading { padding: 60px 20px; text-align: center; color: var(--muted); }
-    .err { margin: 12px 20px; padding: 12px 14px; border-radius: 10px;
-      background: #2a1616; border: 1px solid #4a2323; color: #f0a9a9; font-size: 13px; }
-
-    /* modal */
-    .overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,.6);
-      display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20;
-    }
-    .overlay.show { display: flex; }
-    .modal {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-      width: min(860px, 100%); max-height: 86vh; display: flex; flex-direction: column; overflow: hidden;
-    }
-    .modal .mhead { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-    .modal .mhead h3 { margin: 0; font-size: 15px; flex: 1; }
-    .modal pre {
-      margin: 0; padding: 16px; overflow: auto; font-size: 13px; line-height: 1.55;
-      font-family: "SF Mono", Menlo, Consolas, monospace; color: #dfe6e9; white-space: pre;
-    }
-    .path { color: var(--muted); font-size: 12px; padding: 8px 16px; border-top: 1px solid var(--border); }
+    .mbg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 9;
+           align-items: center; justify-content: center; }
+    .mbg.o { display: flex; }
+    .md { background: linear-gradient(160deg, #1a1812, #121212); border: 1px solid #9a7d28;
+          border-radius: 14px; padding: 1.5rem; width: min(620px, 94vw); max-height: 88vh; overflow: auto; }
+    .mh { display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .mt { font-size: 15px; font-weight: 600; color: #e8c66a; flex: 1; min-width: 120px; }
+    pre { background: #0a0a0a; border: 1px solid #473c1c; border-radius: 8px; padding: 12px;
+          font-size: 12px; color: #e6dcc4; font-family: monospace; white-space: pre-wrap;
+          word-break: break-word; max-height: 340px; overflow: auto; }
+    .row { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
+    .field { margin-bottom: .8rem; }
+    .field label { display: block; font-size: 12px; color: #9a9382; margin-bottom: 4px; }
+    .field input, .field textarea, .field select { width: 100%; }
+    .field textarea { min-height: 200px; font-family: monospace; font-size: 12px; white-space: pre; }
   </style>
 </head>
 <body>
-  <div class="top">
-    <div class="brand"><span class="spark">✨</span> Code Vault <span class="spark">✨</span></div>
-    <div class="search">
-      <span class="mag">🔍</span>
-      <input id="q" placeholder="Search by keyword..." autocomplete="off">
+  <div class="wrap">
+    <div class="top">
+      <h1>&#10022; Code Vault</h1>
+      <input id="q" placeholder="&#128269; ค้นหา..." oninput="rd()">
+      <button class="btn gold" onclick="openForm()">+ เพิ่มโค้ด</button>
     </div>
-    <button class="btn gold" id="addBtn">+ Add</button>
-    <button class="btn icon-btn" id="ghBtn" title="Open repo">🗂️</button>
-    <button class="btn icon-btn" id="refreshBtn" title="Sync from GitHub">↻</button>
+    <div class="chips" id="chips"></div>
+    <div class="cnt" id="cnt"></div>
+    <div class="cards" id="c"><div class="empty">กำลังโหลด…</div></div>
   </div>
 
-  <div class="chips" id="chips"></div>
-  <div id="errBox"></div>
-  <div class="count" id="count"></div>
-  <div class="grid" id="grid"></div>
-  <div class="loading" id="loading">Loading snippets…</div>
-
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <div class="mhead">
-        <span id="mEmoji"></span>
-        <h3 id="mTitle"></h3>
-        <button class="btn" id="copyBtn">Copy</button>
-        <button class="btn" id="closeBtn">✕</button>
+  <!-- view modal -->
+  <div class="mbg" id="mb">
+    <div class="md">
+      <div class="mh">
+        <span id="me" style="font-size:28px"></span>
+        <span class="bg" id="mbd"></span>
+        <span class="mt" id="mtt"></span>
       </div>
-      <pre id="mCode">Loading…</pre>
-      <div class="path" id="mPath"></div>
+      <div class="ds" id="mds" style="margin-bottom:1rem;color:#9a9382;white-space:normal"></div>
+      <pre id="mc"></pre>
+      <div class="row">
+        <button class="btn gold" id="cb" onclick="cp()">คัดลอก</button>
+        <button class="btn" onclick="editCurrent()">แก้ไข</button>
+        <button class="btn danger" onclick="delCurrent()">ลบ</button>
+        <button class="btn" onclick="close_('mb')">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- add/edit modal -->
+  <div class="mbg" id="fb">
+    <div class="md">
+      <div class="mh"><span class="mt" id="ftitle">เพิ่มโค้ด</span></div>
+      <div class="field"><label>ชื่อ (name)</label><input id="fname"></div>
+      <div class="field"><label>ประเภท (type)</label>
+        <select id="ftype"><option>BigQuery</option><option>VBA</option><option>Power Query</option></select></div>
+      <div class="field"><label>คำอธิบาย (desc)</label><input id="fdesc"></div>
+      <div class="field"><label>โค้ด (code)</label><textarea id="fcode"></textarea></div>
+      <div class="row">
+        <button class="btn gold" id="saveBtn" onclick="save()">บันทึก</button>
+        <button class="btn" onclick="close_('fb')">ยกเลิก</button>
+      </div>
     </div>
   </div>
 
   <script>
-    var STATE = { items: [], filter: 'All', q: '', repo: '' };
+    var D = [];
+    var filter = 'All';
+    var vid = null;     // currently viewed id
+    var editId = null;  // id being edited (null = adding)
 
+    var E = ["🐣","🍯","✨","🌟","🐝","🦊","🐥","🌸","🍀","🐧","🦄","🌻","🐱","🦋","🍒","🌈","🐶","🐼","🍓","🌼","🦉","🐰","🐢","🌺","⭐","🐙","🦁","🍋","🌙","🐳","🐦","🍑","💫","🐠","🌷","🐞","🦔","🧸","🍂","🎀"];
+    function ef(id){ var s=""+id,h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return E[h%E.length]; }
+    function es(x){ return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
     function el(id){ return document.getElementById(id); }
-    function esc(s){ return (s||'').replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
 
-    function load(force){
-      el('loading').style.display = 'block';
-      el('loading').textContent = force ? 'Syncing from GitHub…' : 'Loading snippets…';
-      google.script.run
-        .withSuccessHandler(onManifest)
-        .withFailureHandler(function(e){
-          el('loading').style.display = 'none';
-          showErr(e && e.message ? e.message : 'Failed to load.');
-        })
-        .getManifest(!!force);
-    }
-
-    function onManifest(json){
-      el('loading').style.display = 'none';
-      var data;
-      try { data = JSON.parse(json); } catch(e){ return showErr('Bad response from server.'); }
-      if (data.error) showErr(data.error); else el('errBox').innerHTML = '';
-      STATE.items = data.items || [];
-      STATE.repo = data.repo || '';
-      renderChips();
-      render();
-    }
-
-    function showErr(msg){
-      el('errBox').innerHTML = '<div class="err">⚠️ ' + esc(msg) + '</div>';
-    }
-
-    function categories(){
-      var set = {};
-      STATE.items.forEach(function(it){ set[it.category] = 1; });
-      return Object.keys(set).sort();
-    }
+    function types(){ var s={}; D.forEach(function(d){ if(d.type) s[d.type]=1; }); return Object.keys(s); }
 
     function renderChips(){
-      var cats = categories();
-      var html = '<div class="chip synced">✓ Synced</div>';
-      html += chip('All', 'All');
-      cats.forEach(function(c){ html += chip(c, c); });
+      var html = chip('ทั้งหมด','All');
+      types().forEach(function(t){ html += chip(t,t); });
       el('chips').innerHTML = html;
-      Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f]'), function(node){
-        node.onclick = function(){ STATE.filter = node.getAttribute('data-f'); renderChips(); render(); };
-      });
     }
-    function chip(label, val){
-      var active = STATE.filter === val ? ' active' : '';
-      return '<div class="chip' + active + '" data-f="' + esc(val) + '">' + esc(label) + '</div>';
+    function chip(label,val){
+      return '<span class="chip'+(filter===val?' on':'')+'" onclick="setFilter(\''+es(val).replace(/\'/g,"")+'\')">'+es(label)+'</span>';
     }
+    function setFilter(v){ filter=v; renderChips(); rd(); }
 
-    function visible(){
-      var q = STATE.q.toLowerCase();
-      return STATE.items.filter(function(it){
-        if (STATE.filter !== 'All' && it.category !== STATE.filter) return false;
-        if (!q) return true;
-        return (it.title + ' ' + it.desc + ' ' + it.category + ' ' + it.path).toLowerCase().indexOf(q) >= 0;
-      });
-    }
-
-    function render(){
-      var list = visible();
-      el('count').textContent = list.length + ' snippet' + (list.length === 1 ? '' : 's');
-      if (!list.length){
-        el('grid').innerHTML = '';
-        el('grid').innerHTML = '<div class="empty">No snippets match.</div>';
-        return;
+    function rd(){
+      var q=(el('q').value||"").toLowerCase().trim(), o="", n=0;
+      for(var i=0;i<D.length;i++){
+        var c=D[i];
+        if(filter!=='All' && c.type!==filter) continue;
+        if(q && (c.name||"").toLowerCase().indexOf(q)<0 && (c.desc||"").toLowerCase().indexOf(q)<0) continue;
+        n++;
+        o+='<div class="card" onclick="ov(\''+c.id+'\')"><span class="em">'+ef(c.id)+'</span>'+
+           '<div class="bd"><div><span class="bg">'+es(c.type)+'</span>'+
+           '<div class="tt">'+es(c.name)+'</div></div>'+
+           '<div class="ds">'+(c.desc?es(c.desc):"")+'</div></div></div>';
       }
-      el('grid').innerHTML = list.map(function(it){
-        var cls = it.category.replace(/\s+/g, '');
-        return '<div class="card" data-path="' + esc(it.path) + '">' +
-          '<div class="row1"><span class="emoji">' + (it.emoji || '📄') + '</span>' +
-          '<span class="badge ' + cls + '">' + esc(it.category) + '</span></div>' +
-          '<h3>' + esc(it.title) + '</h3>' +
-          '<p>' + esc(it.desc || '') + '</p></div>';
-      }).join('');
-      Array.prototype.forEach.call(document.querySelectorAll('.card'), function(node){
-        node.onclick = function(){ openCard(node.getAttribute('data-path')); };
-      });
+      el('c').innerHTML = n ? o : '<div class="empty">ไม่พบ</div>';
+      el('cnt').textContent = n + ' snippets';
     }
 
-    function openCard(path){
-      var it = STATE.items.filter(function(x){ return x.path === path; })[0] || {};
-      el('mEmoji').textContent = it.emoji || '📄';
-      el('mTitle').textContent = it.title || path;
-      el('mPath').textContent = path;
-      el('mCode').textContent = 'Loading…';
-      el('overlay').classList.add('show');
-      google.script.run
-        .withSuccessHandler(function(txt){ el('mCode').textContent = txt; })
-        .withFailureHandler(function(e){ el('mCode').textContent = (e && e.message) || 'Failed to load file.'; })
-        .getContent(path);
+    function find(id){ for(var i=0;i<D.length;i++) if(String(D[i].id)===String(id)) return D[i]; return null; }
+
+    function ov(id){
+      var f=find(id); if(!f) return; vid=id;
+      el('me').textContent=ef(f.id); el('mbd').textContent=f.type;
+      el('mtt').textContent=f.name; el('mds').textContent=f.desc||"";
+      el('mc').textContent=f.code; el('cb').textContent="คัดลอก";
+      el('mb').classList.add('o');
+    }
+    function close_(id){ el(id).classList.remove('o'); }
+
+    function cp(){
+      var f=find(vid); if(!f) return;
+      var b=el('cb');
+      navigator.clipboard.writeText(f.code).then(function(){ b.textContent="คัดลอกแล้ว ✓"; },
+        function(){ b.textContent="คัดลอกไม่ได้"; });
     }
 
-    function closeModal(){ el('overlay').classList.remove('show'); }
+    function openForm(){
+      editId=null; el('ftitle').textContent="เพิ่มโค้ด";
+      el('fname').value=""; el('ftype').value="BigQuery"; el('fdesc').value=""; el('fcode').value="";
+      el('fb').classList.add('o'); el('fname').focus();
+    }
+    function editCurrent(){
+      var f=find(vid); if(!f) return;
+      editId=f.id; el('ftitle').textContent="แก้ไขโค้ด";
+      el('fname').value=f.name||""; el('ftype').value=f.type||"BigQuery";
+      el('fdesc').value=f.desc||""; el('fcode').value=f.code||"";
+      close_('mb'); el('fb').classList.add('o');
+    }
+    function delCurrent(){
+      var f=find(vid); if(!f) return;
+      if(!confirm('ลบ "'+f.name+'" ?')) return;
+      busy(true);
+      google.script.run.withSuccessHandler(function(j){ D=JSON.parse(j); afterChange(); close_('mb'); })
+        .withFailureHandler(fail).deleteSnippet(f.id);
+    }
+    function save(){
+      var obj={ id:editId, name:el('fname').value, type:el('ftype').value,
+                desc:el('fdesc').value, code:el('fcode').value };
+      if(!obj.name.trim()){ alert('ใส่ชื่อก่อน'); return; }
+      busy(true);
+      var cb=function(j){ D=JSON.parse(j); afterChange(); close_('fb'); };
+      if(editId) google.script.run.withSuccessHandler(cb).withFailureHandler(fail).updateSnippet(obj);
+      else       google.script.run.withSuccessHandler(cb).withFailureHandler(fail).addSnippet(obj);
+    }
+    function afterChange(){ busy(false); renderChips(); rd(); }
+    function busy(on){ el('saveBtn').textContent = on ? 'กำลังบันทึก…' : 'บันทึก'; el('saveBtn').disabled=on; }
+    function fail(e){ busy(false); alert('ผิดพลาด: ' + (e && e.message ? e.message : e)); }
 
-    // events
-    el('q').addEventListener('input', function(e){ STATE.q = e.target.value; render(); });
-    el('refreshBtn').onclick = function(){ load(true); };
-    el('closeBtn').onclick = closeModal;
-    el('overlay').onclick = function(e){ if (e.target === el('overlay')) closeModal(); };
-    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
-    el('copyBtn').onclick = function(){
-      var t = el('mCode').textContent;
-      navigator.clipboard && navigator.clipboard.writeText(t);
-      el('copyBtn').textContent = 'Copied!';
-      setTimeout(function(){ el('copyBtn').textContent = 'Copy'; }, 1200);
-    };
-    el('addBtn').onclick = function(){
-      google.script.run.withSuccessHandler(function(u){ window.open(u, '_blank'); }).newFileUrl();
-    };
-    el('ghBtn').onclick = function(){
-      if (STATE.repo) window.open('https://github.com/' + STATE.repo, '_blank');
-    };
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ close_('mb'); close_('fb'); } });
+    [ 'mb','fb' ].forEach(function(id){ el(id).addEventListener('click', function(e){ if(e.target===el(id)) close_(id); }); });
 
-    load(false);
+    function boot(){
+      google.script.run.withSuccessHandler(function(j){
+        D=JSON.parse(j); renderChips(); rd();
+      }).withFailureHandler(function(e){
+        el('c').innerHTML='<div class="empty">โหลดไม่ได้: '+es(e && e.message)+'</div>';
+      }).getSnippets();
+    }
+    boot();
   </script>
 </body>
 </html>

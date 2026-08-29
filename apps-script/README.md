@@ -1,70 +1,59 @@
 # Code Vault — Google Apps Script web app
 
-A private replacement for the htmlpreview/gist version. Apps Script serves the
-page from a stable URL and reads this repo **server-side**, so:
+A private, self-contained version of the code vault. Apps Script serves the page
+from a stable URL and stores snippets in a **Google Sheet** it creates for you,
+so:
 
-- No CORS proxy, no `htmlpreview` 429 rate-limit failures.
-- The GitHub token stays on the server — **the repo can be private**.
+- No htmlpreview / CORS proxy, no rate-limit "failed to fetch".
+- **Add / Edit / Delete** work and persist (the old gist/backup was read-only).
 - Access can be locked to your Google account only.
+- No GitHub token or repo access needed — the vault owns its own data.
 
 ## Files
 
 | File | Apps Script name | Purpose |
 |------|------------------|---------|
-| `Code.gs` | `Code.gs` | `doGet` + server-side GitHub reads (`getManifest`, `getContent`) |
-| `Index.html` | `Index.html` | the vault UI (search, category chips, cards, code viewer) |
+| `Code.gs` | `Code.gs` | `doGet` + Sheet-backed `getSnippets` / `addSnippet` / `updateSnippet` / `deleteSnippet` |
+| `Seed.gs` | `Seed.gs` | your existing **79 snippets**, loaded into the Sheet on first run |
+| `Index.html` | `Index.html` | the UI — search, type chips, cards, view/copy, add/edit/delete |
 
-## Deploy (manual, ~5 min)
+## Deploy (~4 min)
 
-1. Go to <https://script.google.com> ▸ **New project**.
+1. Go to <https://script.google.com> ▸ **New project** (or use the one you started).
 2. Paste `Code.gs` over the default `Code.gs`.
-3. **＋ ▸ HTML** → name it exactly `Index` → paste `Index.html`.
-4. **Project Settings (⚙) ▸ Script Properties ▸ Add script property**:
-   | Property | Value | Required |
-   |----------|-------|----------|
-   | `GH_OWNER` | `parepiy` | optional (default) |
-   | `GH_REPO` | `my-code-vault` | optional (default) |
-   | `GH_BRANCH` | `main` | optional (default) |
-   | `GH_TOKEN` | a fine-grained PAT | **only if the repo is private** |
+3. **＋ ▸ Script** → name it `Seed` → paste `Seed.gs`.
+4. **＋ ▸ HTML** → name it exactly `Index` → paste `Index.html`.
 5. **Deploy ▸ New deployment ▸ Web app**
    - *Execute as*: **Me**
-   - *Who has access*: **Only myself** (or *Anyone with the link* if you want it shareable)
-6. Authorize when prompted, then open the `/exec` URL. Bookmark it.
+   - *Who has access*: **Only myself** (or *Anyone with the link* to share)
+6. Click **Authorize access** and allow the Sheets/Drive scopes (needed so it can
+   create and read your data Sheet). Open the `/exec` URL and bookmark it.
 
-### GitHub token (private repo only)
+On first load it creates a spreadsheet called **"Code Vault Data"** in your Drive
+and fills it with your 79 snippets. After that the web app reads and writes that
+Sheet. You can also edit snippets directly in the Sheet if you prefer.
 
-Create a **fine-grained** PAT at
-<https://github.com/settings/personal-access-tokens/new>:
-- Repository access → **Only select repositories** → `my-code-vault`
-- Permissions → **Contents: Read-only**
-
-Paste it into `GH_TOKEN`. It never leaves the server. With the token set you can
-switch the repo back to **private** and the vault keeps working.
-
-## Deploy with clasp (optional, from this folder)
-
-```bash
-npm i -g @google/clasp
-clasp login
-clasp create --title "Code Vault" --type webapp --rootDir apps-script
-clasp push
-```
-
-Then set Script Properties and deploy from the Apps Script UI as above.
-(`clasp` reads `Code.gs`/`Index.html` from this directory.)
+> The `GH_TOKEN` / `GH_*` script properties from the earlier GitHub-based version
+> are **not used** here — you can leave them or delete them.
 
 ## How it works
 
-- `getManifest()` lists the repo tree in one API call, fetches every code file's
-  content in parallel (`UrlFetchApp.fetchAll`), derives a **title** from the
-  filename, a **category** from the extension (`.sql`→BigQuery, `.bas`→VBA,
-  `.m`/`.md`→Power Query), and a **description** from the file's first comment
-  line. The result is cached for 6 hours; the **↻** button forces a re-sync.
-- `getContent(path)` fetches one file's raw text when you open a card.
-- `+ Add` opens the GitHub "new file" page for the repo; commit there and hit ↻.
+- `getSnippets()` returns every row of the `snippets` sheet as
+  `{id, name, type, desc, code}`.
+- `addSnippet` / `updateSnippet` / `deleteSnippet` mutate the Sheet and return the
+  refreshed list; the UI re-renders from it.
+- Each card's emoji is derived from its `id` (same scheme as your original), so
+  icons stay stable.
+- The backing spreadsheet id is remembered in Script Properties (`SHEET_ID`).
 
 ## Customizing
 
-- Titles/acronyms: edit `ACRONYMS` in `Code.gs`.
-- Categories / which file types show up: edit `CATEGORY_BY_EXT`.
-- Card icons: edit the `EMOJI` pool.
+- Change the emoji pool: edit `E` in `Index.html`.
+- Change the type options in the Add/Edit form: edit the `<select id="ftype">`.
+- Re-seed from scratch: delete the "Code Vault Data" spreadsheet **and** the
+  `SHEET_ID` script property, then reload — it rebuilds from `Seed.gs`.
+
+## Backup
+
+The Sheet is your live data. To snapshot it, **File ▸ Download** it from Google
+Sheets, or keep exporting the standalone HTML backup as before.
