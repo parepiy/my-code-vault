@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --panel: #171717;
+      --panel-2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #ececec;
+      --muted: #8a8a8a;
+      --gold: #e7c65b;
+      --green: #6fcf7f;
+      --accent: #d98b6a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    a { color: inherit; }
+
+    /* header */
+    .top {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--bg); z-index: 5;
+      flex-wrap: wrap;
+    }
+    .brand { font-weight: 700; white-space: nowrap; }
+    .brand .spark { color: var(--gold); }
+    .search {
+      flex: 1; min-width: 220px; position: relative;
+    }
+    .search input {
+      width: 100%; padding: 10px 12px 10px 34px;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px; outline: none;
+    }
+    .search input:focus { border-color: #3a3a3a; }
+    .search .mag { position: absolute; left: 11px; top: 9px; opacity: .6; }
+    .btn {
+      border: 1px solid var(--border); background: var(--panel);
+      color: var(--text); border-radius: 10px; padding: 9px 12px;
+      cursor: pointer; font-size: 14px; white-space: nowrap;
+    }
+    .btn:hover { background: var(--panel-2); }
+    .btn.gold { background: var(--gold); color: #1a1a1a; border-color: var(--gold); font-weight: 600; }
+    .icon-btn { width: 40px; text-align: center; }
+
+    /* chips */
+    .chips { display: flex; gap: 8px; padding: 12px 20px 4px; flex-wrap: wrap; }
+    .chip {
+      border: 1px solid var(--border); background: var(--panel);
+      color: var(--text); border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; font-size: 13px;
+    }
+    .chip.active { background: #2f2a17; border-color: var(--gold); color: var(--gold); }
+    .chip.synced { color: var(--green); border-color: #244a2a; background: #14251a; }
+
+    .count { padding: 8px 20px 0; color: var(--muted); font-size: 13px; }
+
+    /* grid */
+    .grid {
+      display: grid; gap: 16px; padding: 12px 20px 40px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; cursor: pointer;
+      display: flex; flex-direction: column; gap: 10px; min-height: 130px;
+      transition: border-color .12s, transform .12s;
+    }
+    .card:hover { border-color: #3d3d3d; transform: translateY(-2px); }
+    .card .row1 { display: flex; align-items: center; gap: 10px; }
+    .card .emoji { font-size: 22px; line-height: 1; }
+    .badge {
+      font-size: 11px; padding: 3px 9px; border-radius: 999px;
+      background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+    }
+    .badge.BigQuery { color: #7db6f5; }
+    .badge.VBA { color: #c58bf0; }
+    .badge.PowerQuery { color: var(--green); }
+    .card h3 { margin: 0; font-size: 15px; font-weight: 600; }
+    .card p { margin: 0; color: var(--muted); font-size: 12.5px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .empty, .loading { padding: 60px 20px; text-align: center; color: var(--muted); }
+    .err { margin: 12px 20px; padding: 12px 14px; border-radius: 10px;
+      background: #2a1616; border: 1px solid #4a2323; color: #f0a9a9; font-size: 13px; }
+
+    /* modal */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6);
+      display: none; align-items: center; justify-content: center; padding: 20px; z-index: 20;
+    }
+    .overlay.show { display: flex; }
+    .modal {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      width: min(860px, 100%); max-height: 86vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal .mhead { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .modal .mhead h3 { margin: 0; font-size: 15px; flex: 1; }
+    .modal pre {
+      margin: 0; padding: 16px; overflow: auto; font-size: 13px; line-height: 1.55;
+      font-family: "SF Mono", Menlo, Consolas, monospace; color: #dfe6e9; white-space: pre;
+    }
+    .path { color: var(--muted); font-size: 12px; padding: 8px 16px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand"><span class="spark">✨</span> Code Vault <span class="spark">✨</span></div>
+    <div class="search">
+      <span class="mag">🔍</span>
+      <input id="q" placeholder="Search by keyword..." autocomplete="off">
+    </div>
+    <button class="btn gold" id="addBtn">+ Add</button>
+    <button class="btn icon-btn" id="ghBtn" title="Open repo">🗂️</button>
+    <button class="btn icon-btn" id="refreshBtn" title="Sync from GitHub">↻</button>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div id="errBox"></div>
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"></div>
+  <div class="loading" id="loading">Loading snippets…</div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="mhead">
+        <span id="mEmoji"></span>
+        <h3 id="mTitle"></h3>
+        <button class="btn" id="copyBtn">Copy</button>
+        <button class="btn" id="closeBtn">✕</button>
+      </div>
+      <pre id="mCode">Loading…</pre>
+      <div class="path" id="mPath"></div>
+    </div>
+  </div>
+
+  <script>
+    var STATE = { items: [], filter: 'All', q: '', repo: '' };
+
+    function el(id){ return document.getElementById(id); }
+    function esc(s){ return (s||'').replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+
+    function load(force){
+      el('loading').style.display = 'block';
+      el('loading').textContent = force ? 'Syncing from GitHub…' : 'Loading snippets…';
+      google.script.run
+        .withSuccessHandler(onManifest)
+        .withFailureHandler(function(e){
+          el('loading').style.display = 'none';
+          showErr(e && e.message ? e.message : 'Failed to load.');
+        })
+        .getManifest(!!force);
+    }
+
+    function onManifest(json){
+      el('loading').style.display = 'none';
+      var data;
+      try { data = JSON.parse(json); } catch(e){ return showErr('Bad response from server.'); }
+      if (data.error) showErr(data.error); else el('errBox').innerHTML = '';
+      STATE.items = data.items || [];
+      STATE.repo = data.repo || '';
+      renderChips();
+      render();
+    }
+
+    function showErr(msg){
+      el('errBox').innerHTML = '<div class="err">⚠️ ' + esc(msg) + '</div>';
+    }
+
+    function categories(){
+      var set = {};
+      STATE.items.forEach(function(it){ set[it.category] = 1; });
+      return Object.keys(set).sort();
+    }
+
+    function renderChips(){
+      var cats = categories();
+      var html = '<div class="chip synced">✓ Synced</div>';
+      html += chip('All', 'All');
+      cats.forEach(function(c){ html += chip(c, c); });
+      el('chips').innerHTML = html;
+      Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f]'), function(node){
+        node.onclick = function(){ STATE.filter = node.getAttribute('data-f'); renderChips(); render(); };
+      });
+    }
+    function chip(label, val){
+      var active = STATE.filter === val ? ' active' : '';
+      return '<div class="chip' + active + '" data-f="' + esc(val) + '">' + esc(label) + '</div>';
+    }
+
+    function visible(){
+      var q = STATE.q.toLowerCase();
+      return STATE.items.filter(function(it){
+        if (STATE.filter !== 'All' && it.category !== STATE.filter) return false;
+        if (!q) return true;
+        return (it.title + ' ' + it.desc + ' ' + it.category + ' ' + it.path).toLowerCase().indexOf(q) >= 0;
+      });
+    }
+
+    function render(){
+      var list = visible();
+      el('count').textContent = list.length + ' snippet' + (list.length === 1 ? '' : 's');
+      if (!list.length){
+        el('grid').innerHTML = '';
+        el('grid').innerHTML = '<div class="empty">No snippets match.</div>';
+        return;
+      }
+      el('grid').innerHTML = list.map(function(it){
+        var cls = it.category.replace(/\s+/g, '');
+        return '<div class="card" data-path="' + esc(it.path) + '">' +
+          '<div class="row1"><span class="emoji">' + (it.emoji || '📄') + '</span>' +
+          '<span class="badge ' + cls + '">' + esc(it.category) + '</span></div>' +
+          '<h3>' + esc(it.title) + '</h3>' +
+          '<p>' + esc(it.desc || '') + '</p></div>';
+      }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('.card'), function(node){
+        node.onclick = function(){ openCard(node.getAttribute('data-path')); };
+      });
+    }
+
+    function openCard(path){
+      var it = STATE.items.filter(function(x){ return x.path === path; })[0] || {};
+      el('mEmoji').textContent = it.emoji || '📄';
+      el('mTitle').textContent = it.title || path;
+      el('mPath').textContent = path;
+      el('mCode').textContent = 'Loading…';
+      el('overlay').classList.add('show');
+      google.script.run
+        .withSuccessHandler(function(txt){ el('mCode').textContent = txt; })
+        .withFailureHandler(function(e){ el('mCode').textContent = (e && e.message) || 'Failed to load file.'; })
+        .getContent(path);
+    }
+
+    function closeModal(){ el('overlay').classList.remove('show'); }
+
+    // events
+    el('q').addEventListener('input', function(e){ STATE.q = e.target.value; render(); });
+    el('refreshBtn').onclick = function(){ load(true); };
+    el('closeBtn').onclick = closeModal;
+    el('overlay').onclick = function(e){ if (e.target === el('overlay')) closeModal(); };
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeModal(); });
+    el('copyBtn').onclick = function(){
+      var t = el('mCode').textContent;
+      navigator.clipboard && navigator.clipboard.writeText(t);
+      el('copyBtn').textContent = 'Copied!';
+      setTimeout(function(){ el('copyBtn').textContent = 'Copy'; }, 1200);
+    };
+    el('addBtn').onclick = function(){
+      google.script.run.withSuccessHandler(function(u){ window.open(u, '_blank'); }).newFileUrl();
+    };
+    el('ghBtn').onclick = function(){
+      if (STATE.repo) window.open('https://github.com/' + STATE.repo, '_blank');
+    };
+
+    load(false);
+  </script>
+</body>
+</html>
