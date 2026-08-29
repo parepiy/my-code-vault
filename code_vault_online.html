@@ -11,6 +11,8 @@ input:focus,textarea:focus,select:focus{border-color:#d4af37}
 .obtn{padding:8px 12px;border:1px solid #473c1c;border-radius:8px;background:#141414;color:#f3ede0;font-size:14px;cursor:pointer;white-space:nowrap}
 .obtn:hover{border-color:#d4af37}
 .obtn.danger:hover{border-color:#d46a6a;color:#f0a9a9}
+.icb{padding:8px 11px;border:1px solid #473c1c;border-radius:8px;background:#141414;color:#f3ede0;font-size:15px;cursor:pointer;line-height:1}
+.icb:hover{border-color:#d4af37}
 .chips{display:flex;gap:8px;margin-top:.9rem;flex-wrap:wrap}
 .chip{font-size:12.5px;color:#cfc7b5;border:1px solid #2c2820;border-radius:999px;padding:5px 13px;cursor:pointer;background:#141414}
 .chip.on{color:#e8c66a;border-color:#d4af37;background:rgba(212,175,55,.14)}
@@ -44,7 +46,7 @@ th{background:#1a1812;color:#e8c66a;position:sticky;top:0}
 tbody tr:nth-child(even){background:#141210}
 .muted{color:#6b6655;font-size:11px;margin-top:6px}
 </style></head><body><div class="wrap">
-<div class="top"><h1>&#10022; Code Vault</h1><input id="q" placeholder="&#128269; ค้นหา..." oninput="rd()"><button class="gbtn" onclick="openForm()">+ เพิ่มโค้ด</button></div>
+<div class="top"><h1>&#10022; Code Vault</h1><input id="q" placeholder="&#128269; ค้นหา..." oninput="rd()"><button class="gbtn" onclick="openForm()">+ เพิ่มโค้ด</button><button class="icb" id="backupBtn" title="สำรองข้อมูล (Backup)" onclick="backup()">&#128190;</button><button class="icb" title="ตั้งค่า (Settings)" onclick="openSettings()">&#9881;</button><button class="icb" id="syncBtn" title="ซิงค์ (Sync)" onclick="sync()">&#8635;</button></div>
 <div class="chips" id="chips"></div><div class="cnt" id="cnt"></div>
 <div class="cards" id="c"></div></div>
 
@@ -64,6 +66,13 @@ tbody tr:nth-child(even){background:#141210}
 <div class="field"><label>โค้ด (code)</label><textarea id="fcode"></textarea></div>
 <div class="field"><label>ตัวอย่าง Output — วาง CSV (ไม่บังคับ)</label><textarea id="fout" class="sm" placeholder="col1,col2&#10;a,b"></textarea></div>
 <div class="row"><button class="gbtn" id="saveBtn" onclick="save()">บันทึก</button><button class="obtn" onclick="close_('fb')">ยกเลิก</button></div>
+</div></div>
+
+<div class="mbg" id="sb"><div class="md">
+<div class="mh"><span class="mt">ตั้งค่า</span></div>
+<div class="ds" id="scount" style="color:#9a9382;white-space:normal;margin-bottom:1rem"></div>
+<div class="field"><label>กู้คืนจากไฟล์สำรอง (.json หรือ .html)</label><input type="file" id="restoreFile" accept=".json,.html,.htm" onchange="onRestoreFile(this)"></div>
+<div class="row"><button class="obtn" onclick="backup()">&#128190; ดาวน์โหลดไฟล์สำรอง</button><button class="obtn danger" onclick="resetSeed()">รีเซ็ตเป็นค่าเริ่มต้น</button><button class="obtn" onclick="close_('sb')">ปิด</button></div>
 </div></div>
 
 <script>
@@ -90,9 +99,15 @@ function openForm(){editId=null;el('ftitle').textContent="เพิ่มโค�
 function editCurrent(){var f=find(vid);if(!f)return;editId=f.id;el('ftitle').textContent="แก้ไขโค้ด";el('fname').value=f.name||"";el('ftype').value=f.type||"BigQuery";el('fdesc').value=f.desc||"";el('fcode').value=f.code||"";el('fout').value=f.outCsv||"";close_('mb');el('fb').classList.add('o');}
 function delCurrent(){var f=find(vid);if(!f)return;if(!confirm('ลบ "'+f.name+'" ?'))return;for(var i=0;i<D.length;i++)if(String(D[i].id)===String(f.id)){D.splice(i,1);break;}persist();close_('mb');renderChips();rd();}
 function save(){var name=el('fname').value.trim();if(!name){alert('ใส่ชื่อก่อน');return;}var obj={name:name,type:el('ftype').value,desc:el('fdesc').value.trim(),code:el('fcode').value,outCsv:el('fout').value};if(editId){var f=find(editId);if(f){f.name=obj.name;f.type=obj.type;f.desc=obj.desc;f.code=obj.code;f.outCsv=obj.outCsv;}}else{obj.id=String(Date.now());D.unshift(obj);}persist();close_('fb');renderChips();rd();}
+function backup(){var blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);var d=new Date().toISOString().slice(0,10).replace(/-/g,'');a.download='code_vault_backup_'+d+'.json';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(a.href);},0);}
+function sync(){D=load();renderChips();rd();var b=el('syncBtn');b.textContent='✓';setTimeout(function(){b.innerHTML='&#8635;';},1000);}
+function openSettings(){el('scount').textContent='มีทั้งหมด '+D.length+' snippets ในเครื่องนี้';el('restoreFile').value='';el('sb').classList.add('o');}
+function extractSnippets(text){try{var j=JSON.parse(text);if(Array.isArray(j))return j;}catch(e){}var idx=text.search(/var\s+(?:SEED|D)\s*=\s*\[/);if(idx<0)return null;var start=text.indexOf('[',idx),depth=0,instr=false,esc=false;for(var i=start;i<text.length;i++){var ch=text[i];if(instr){if(esc)esc=false;else if(ch=='\\')esc=true;else if(ch=='"')instr=false;}else{if(ch=='"')instr=true;else if(ch=='[')depth++;else if(ch==']'){depth--;if(depth==0){try{return JSON.parse(text.slice(start,i+1));}catch(e){return null;}}}}}return null;}
+function onRestoreFile(input){var f=input.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var a=extractSnippets(r.result);if(!a||!a.length){alert('อ่านไฟล์สำรองไม่สำเร็จ');return;}if(!confirm('แทนที่ข้อมูลปัจจุบันด้วย '+a.length+' snippets จากไฟล์สำรอง?'))return;D=a;persist();renderChips();rd();close_('sb');};r.readAsText(f);}
+function resetSeed(){if(!confirm('รีเซ็ตกลับเป็น '+SEED.length+' snippets เริ่มต้น? (โค้ดที่เพิ่ม/แก้เองในเครื่องนี้จะหาย)'))return;D=SEED.slice();persist();renderChips();rd();close_('sb');}
 function parseCSV(text){text=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');var rows=[],row=[],cur='',inq=false;for(var i=0;i<text.length;i++){var ch=text[i];if(inq){if(ch=='"'){if(text[i+1]=='"'){cur+='"';i++;}else inq=false;}else cur+=ch;}else{if(ch=='"')inq=true;else if(ch==','){row.push(cur);cur='';}else if(ch=='\n'){row.push(cur);rows.push(row);row=[];cur='';}else cur+=ch;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows.filter(function(r){return r.length>1||(r.length==1&&r[0].trim()!=='');});}
 function csvTable(text){var rows=parseCSV(text);if(!rows.length)return '<div class="muted">(ว่าง)</div>';var max=50,head=rows[0],body=rows.slice(1,max+1);var h='<div class="tbl"><table><thead><tr>';head.forEach(function(c){h+='<th>'+es(c)+'</th>';});h+='</tr></thead><tbody>';body.forEach(function(r){h+='<tr>';head.forEach(function(_,ci){h+='<td>'+es(r[ci]==null?'':r[ci])+'</td>';});h+='</tr>';});h+='</tbody></table></div>';if(rows.length-1>max)h+='<div class="muted">แสดง '+max+' จาก '+(rows.length-1)+' แถว</div>';return h;}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){close_('mb');close_('fb');}});
-['mb','fb'].forEach(function(id){el(id).addEventListener('click',function(e){if(e.target===el(id))close_(id);});});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){close_('mb');close_('fb');close_('sb');}});
+['mb','fb','sb'].forEach(function(id){el(id).addEventListener('click',function(e){if(e.target===el(id))close_(id);});});
 renderChips();rd();
 </script></body></html>
