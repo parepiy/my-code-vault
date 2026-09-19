@@ -1,0 +1,607 @@
+<html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Code Vault</title>
+<meta name="theme-color" content="#0d0d0d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Code Vault">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#d4af37;--gold-soft:#e8c66a;--gold-dim:#9a7d28;--bg:#0d0d0d;--surface:#161616;--surface-2:#1e1e1e;--border:#2c2820;--border-gold:#473c1c;--text:#f3ede0;--text-dim:#8a8478}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#f3ede0;padding:0 1.5rem 2rem;min-height:100vh}
+.vault{max-width:1600px;margin:0 auto}
+.topbar{position:sticky;top:0;z-index:50;background:#0d0d0d;padding:calc(0.7rem + env(safe-area-inset-top,0px)) 1.5rem 0.7rem;margin:0 -1.5rem;border-bottom:1px solid var(--border-gold)}
+.topbar-inner{max-width:1600px;margin:0 auto}
+h1{font-size:17px;font-weight:600;letter-spacing:0.3px;white-space:nowrap;flex-shrink:0;background:linear-gradient(90deg,#e8c66a,#d4af37,#9a7d28);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.header{display:flex;align-items:center;gap:8px;margin-bottom:0.6rem;flex-wrap:wrap}
+.icon-btn{padding:8px 11px;font-size:14px}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border-gold);border-radius:8px;background:#141414;color:var(--text);font-size:14px;outline:none}
+.search-wrap input::placeholder{color:#6b6655}
+.search-wrap input:focus{border-color:var(--gold)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gold-dim);font-size:14px;pointer-events:none}
+.btn{padding:8px 14px;border:1px solid var(--border-gold);border-radius:8px;background:#161616;color:var(--text);cursor:pointer;font-size:13px;white-space:nowrap}
+.btn:hover{background:#201d14;border-color:var(--gold-dim)}
+.btn-primary{border-color:var(--gold);background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1500;font-weight:600}
+.btn-primary:hover{background:linear-gradient(135deg,#e8c66a,#d4af37)}
+.btn-clear{border-color:var(--border);background:transparent;color:#7a7568;display:none}
+.btn-clear:hover{background:#1a1a1a;border-color:var(--gold-dim);color:var(--gold-soft)}
+.btn-clear.visible{display:inline-block}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sync-status{font-size:11px;padding:4px 9px;border-radius:8px}
+.chip{padding:5px 13px;border:1px solid var(--border-gold);border-radius:20px;font-size:12px;cursor:pointer;background:#161616;color:#a39a82}
+.chip:hover{border-color:var(--gold-dim)}
+.chip.active{border-color:var(--gold);background:rgba(212,175,55,0.12);color:var(--gold-soft);font-weight:600}
+.count{font-size:12px;color:#6b6655;margin:1.1rem 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-items:start}
+.card{border:1px solid var(--border-gold);border-radius:12px;background:linear-gradient(150deg,#1a1812,#141414);cursor:pointer;transition:box-shadow 0.18s,border-color 0.18s,transform 0.18s;height:104px;display:flex;align-items:flex-start;gap:11px;padding:14px 16px;position:relative;overflow:hidden}
+.card:hover{box-shadow:0 4px 20px rgba(212,175,55,0.15);border-color:var(--gold);transform:translateY(-2px)}
+.card-emoji{font-size:26px;line-height:1;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))}
+.card-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;height:100%}
+.card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.badge{padding:2px 9px;border-radius:8px;font-size:10.5px;white-space:nowrap;font-weight:600;flex-shrink:0;border:1px solid transparent}
+.badge-bq{background:rgba(212,175,55,0.14);color:#e8c66a;border-color:#473c1c}
+.badge-vba{background:rgba(200,140,40,0.14);color:#e0a850;border-color:#5a401c}
+.badge-pq{background:rgba(160,200,120,0.12);color:#b5d68a;border-color:#3e4a2c}
+.badge-xl{background:rgba(180,160,220,0.12);color:#c9b8e8;border-color:#3e3654}
+.card-title{font-size:13px;font-weight:600;line-height:1.3;color:var(--text);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.card-desc{font-size:11px;color:#7a7568;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+pre{background:#0a0a0a;border:1px solid var(--border-gold);border-radius:8px;padding:12px;font-size:12px;color:#e6dcc4;font-family:'SF Mono','Fira Code',monospace;overflow-x:auto;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow-y:auto}
+.view-modal{background:linear-gradient(160deg,#1a1812,#121212);border-radius:14px;border:1px solid var(--gold-dim);padding:1.5rem;width:min(600px,94vw);max-height:88vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,0.6)}
+.view-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem}
+.view-emoji{font-size:28px;line-height:1;flex-shrink:0}
+.view-title{font-size:15px;font-weight:600;flex:1;line-height:1.3;color:var(--gold-soft)}
+.view-desc{font-size:12px;color:#9a9382;margin-bottom:1rem}
+.view-actions{display:flex;gap:8px;margin-top:1rem;justify-content:space-between;align-items:center}
+.view-right{display:flex;gap:8px}
+.copy-btn{padding:7px 16px;font-size:12px;border:1px solid var(--gold);border-radius:8px;background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1500;font-weight:600;cursor:pointer}
+.copy-btn:hover{background:linear-gradient(135deg,#e8c66a,#d4af37)}
+.edit-btn{padding:7px 13px;font-size:12px;border:1px solid var(--border-gold);border-radius:8px;background:#161616;cursor:pointer;color:var(--text)}
+.edit-btn:hover{background:#201d14;border-color:var(--gold-dim)}
+.del-btn{padding:7px 11px;font-size:12px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:#6b6655}
+.del-btn:hover{border-color:#7a2d2d;color:#e08585;background:rgba(120,40,40,0.15)}
+.empty{text-align:center;padding:3rem 0;color:#6b6655;font-size:13px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.open{display:flex}
+.modal{background:linear-gradient(160deg,#1a1812,#121212);border-radius:14px;border:1px solid var(--gold-dim);padding:1.25rem;width:min(480px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,0.6)}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;color:var(--gold-soft)}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:#a39a82;margin-bottom:4px}
+.field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--border-gold);border-radius:8px;font-size:13px;outline:none;background:#141414;color:var(--text)}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border-gold);border-radius:8px;font-size:12px;font-family:'SF Mono','Fira Code',monospace;min-height:160px;resize:vertical;outline:none;background:#0a0a0a;color:#e6dcc4}
+.field textarea:focus{border-color:var(--gold)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.save-btn{padding:8px 18px;border-radius:8px;border:1px solid var(--gold);background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1500;font-weight:600;cursor:pointer;font-size:13px}
+.save-btn:hover{background:linear-gradient(135deg,#e8c66a,#d4af37)}
+.cancel-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:#7a7568;cursor:pointer;font-size:13px}
+.cancel-btn:hover{border-color:var(--gold-dim);color:var(--gold-soft)}
+.err{border-color:#e24b4a !important}
+.sync-status{font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid transparent}
+.sync-status.ok{color:#b5d68a;background:rgba(120,160,80,0.12);border-color:#3e4a2c}
+.sync-status.loading{color:#a39a82;background:#1a1a1a;border-color:var(--border)}
+.sync-status.warn{color:#e0a850;background:rgba(200,140,40,0.12);border-color:#5a401c}
+.sync-status.error{color:#e08585;background:rgba(120,40,40,0.15);border-color:#7a2d2d}
+.field-hint{font-size:11px;color:#6b6655;margin-top:3px}
+.offline-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#2a2412;border:1px solid var(--gold-dim);color:var(--gold-soft);font-size:12px;padding:8px 16px;border-radius:20px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.5);display:none;white-space:nowrap}
+.offline-bar.show{display:block}
+@media (max-width:768px){ .search-wrap input,.field input,.field select,.field textarea{font-size:16px} }
+.view-table-label{font-size:12px;color:#a39a82;margin:1.1rem 0 .4rem;font-weight:600}
+.tbl-wrap{border:1px solid var(--border-gold);border-radius:8px;overflow:auto;max-height:300px}
+table.tbl{border-collapse:collapse;font-size:11.5px;width:max-content;min-width:100%;font-family:'SF Mono','Fira Code',monospace}
+table.tbl th,table.tbl td{border:1px solid #2c2820;padding:5px 9px;text-align:left;white-space:nowrap;color:#e6dcc4;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+table.tbl th{position:sticky;top:0;background:#1e1a10;color:var(--gold-soft);font-weight:600;z-index:1}
+table.tbl tbody tr:nth-child(even){background:rgba(212,175,55,0.04)}
+table.tbl tbody tr:hover{background:rgba(212,175,55,0.09)}
+.card-tbl-flag{font-size:10px;color:var(--gold-dim);margin-left:auto}
+.csv-file-btn{display:inline-block;padding:6px 12px;font-size:12px;border:1px dashed var(--gold-dim);border-radius:8px;background:#161616;color:var(--gold-soft);cursor:pointer;margin-bottom:6px}
+.csv-file-btn:hover{background:#201d14;border-color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="header">
+      <h1>✦ Code Vault ✦</h1>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search" placeholder="ค้นหาด้วย keyword..." oninput="onSearch()">
+      </div>
+      <button class="btn btn-primary" onclick="openModal(null)">+ เพิ่มโค้ด</button>
+      <button class="btn" onclick="openSchema()" title="ผังความสัมพันธ์ตาราง" style="border-color:var(--gold);color:var(--gold-soft)">🔗 ผังตาราง</button>
+      <button class="btn icon-btn" onclick="downloadBackup()" title="ดาวน์โหลดสำรอง (offline)">💾</button>
+      <button class="btn icon-btn" onclick="openSettings()" title="ตั้งค่า">⚙</button>
+      <button class="btn icon-btn" onclick="manualSync()" title="Sync">↻</button>
+    </div>
+    <div class="filters" id="filters"><span id="sync-status" class="sync-status loading">⏳</span><div class="chip active" data-type="all" onclick="setType('all')">ทั้งหมด</div><div class="chip" data-type="BigQuery" onclick="setType('BigQuery')">BigQuery</div><div class="chip" data-type="VBA" onclick="setType('VBA')">VBA</div><div class="chip" data-type="Power Query" onclick="setType('Power Query')">Power Query</div><button class="btn btn-clear" id="clear-btn" onclick="clearFilters()">✕ ล้างตัวกรอง</button></div>
+  </div>
+</div>
+<div class="vault">
+  <div class="count" id="count"></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<div class="offline-bar" id="offline-bar">⚡ ออฟไลน์ — กำลังแสดงข้อมูลที่บันทึกไว้ล่าสุด</div>
+
+<div class="modal-bg" id="view-bg">
+  <div class="view-modal">
+    <div class="view-header">
+      <span class="view-emoji" id="view-emoji"></span>
+      <span class="badge" id="view-badge"></span>
+      <span class="view-title" id="view-title"></span>
+    </div>
+    <div class="view-desc" id="view-desc"></div>
+    <pre id="view-code"></pre>
+    <div id="view-table"></div>
+    <div class="view-actions">
+      <button class="del-btn" onclick="delFromView()">ลบ</button>
+      <div class="view-right">
+        <button class="edit-btn" onclick="editFromView()">แก้ไข</button>
+        <button class="copy-btn" id="view-copy-btn" onclick="copyFromView()">คัดลอก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">เพิ่มโค้ดใหม่</h3>
+    <div class="field">
+      <label>ชื่อโค้ด *</label>
+      <input type="text" id="f-name" placeholder="เช่น Promotion Priority Query">
+    </div>
+    <div class="field">
+      <label>ประเภท *</label>
+      <select id="f-type">
+        <option value="BigQuery">BigQuery</option>
+        <option value="VBA">VBA</option>
+        <option value="Power Query">Power Query</option>
+        <option value="Excel Formula">Excel Formula</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="f-desc" placeholder="เช่น ดึง promotion ที่มี clear/เคลียร์ พร้อม priority">
+    </div>
+    <div class="field">
+      <label>โค้ด *</label>
+      <textarea id="f-code" placeholder="วาง code ที่นี่..."></textarea>
+    </div>
+    <div class="field">
+      <label>ตารางตัวอย่าง (CSV) — ไม่บังคับ</label>
+      <label class="csv-file-btn">📄 เลือกไฟล์ CSV<input type="file" id="f-csv-file" accept=".csv,text/csv" style="display:none" onchange="onCsvFile(this)"></label>
+      <span id="f-csv-name" class="field-hint" style="margin-left:8px"></span>
+      <textarea id="f-table" placeholder="หรือวาง CSV ที่นี่... (บรรทัดแรกเป็นหัวตาราง)" style="min-height:90px"></textarea>
+      <div class="field-hint">อัปโหลดหรือวาง CSV เพื่อแสดงเป็นตารางตัวอย่างในการ์ด</div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" onclick="closeModal()">ยกเลิก</button>
+      <button class="save-btn" onclick="saveCode()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="settings-bg">
+  <div class="modal">
+    <h3>⚙ ตั้งค่า GitHub Gist Sync</h3>
+    <div class="field">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="s-token" placeholder="ghp_xxxxxxxxxxxx">
+      <div class="field-hint">ต้องการ scope: <strong>gist</strong> — สร้างได้ที่ GitHub → Settings → Developer settings → Personal access tokens</div>
+    </div>
+    <div class="field">
+      <label>Gist ID (เว้นว่างถ้าต้องการสร้าง Gist ใหม่)</label>
+      <input type="text" id="s-gist" placeholder="เช่น abc1234def5678...">
+      <div class="field-hint">หลังจากสร้างครั้งแรก ID จะถูกบันทึกอัตโนมัติ</div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" onclick="closeSettings()">ยกเลิก</button>
+      <button class="save-btn" onclick="applySettings()">บันทึกและซิงค์</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var codes = [];
+var activeType = 'all';
+var editId = null;
+var saveTimer = null;
+var GIST_FILE = 'code_vault.json';
+var typeMap = {'BigQuery':'badge-bq','VBA':'badge-vba','Power Query':'badge-pq','Excel Formula':'badge-xl'};
+var EMOJIS = ['🐣','🍯','✨','🌟','🐝','🦊','🐥','🌸','🍀','🐧','🦄','🌻','🐱','🦋','🍒','🌈','🐶','🐼','🍓','🌼','🦉','🐰','🐢','🌺','⭐','🐙','🦁','🍋','🌙','🐳','🐦','🍑','💫','🐠','🌷','🐞','🦔','🧸','🍂','🎀'];
+function emojiFor(id){
+  var s = String(id), h = 0;
+  for(var i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return EMOJIS[h % EMOJIS.length];
+}
+
+var DEFAULT_GIST_ID = '7b0ed7d1cc452ad90fb4fa638a4093ef';
+function getToken(){ return localStorage.getItem('cv_token') || ''; }
+function getGistId(){ return localStorage.getItem('cv_gist_id') || DEFAULT_GIST_ID; }
+
+function setStatus(state, msg){
+  var el = document.getElementById('sync-status');
+  el.className = 'sync-status ' + state;
+  el.textContent = msg;
+}
+
+async function loadFromGist(){
+  var token = getToken(), gistId = getGistId();
+  if(!token || !gistId){ setStatus('warn', '⚠ ยังไม่ได้ตั้งค่า — กด ⚙ ตั้งค่า'); return; }
+  setStatus('loading', '⏳ กำลังโหลด...');
+  try{
+    var res = await fetch('https://api.github.com/gists/'+gistId, {
+      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    var data = await res.json();
+    var file = data.files && data.files[GIST_FILE];
+    if(file && file.content){ codes = JSON.parse(file.content); }
+    try{ localStorage.setItem('cv_cache', JSON.stringify(codes)); }catch(_){}
+    render();
+    setStatus('ok', '✓ ซิงค์แล้ว');
+  }catch(e){
+    var cached=null; try{ cached=localStorage.getItem('cv_cache'); }catch(_){}
+    if(cached){ try{ codes=JSON.parse(cached); render(); setStatus('warn','⚡ ออฟไลน์ — ข้อมูลล่าสุดที่บันทึกไว้'); return; }catch(_){} }
+    setStatus('error', '⚠ โหลดไม่ได้: '+e.message);
+  }
+}
+
+async function saveToGist(){
+  var token = getToken(), gistId = getGistId();
+  if(!token){ setStatus('warn', '⚠ ยังไม่ได้ตั้งค่า'); return; }
+  setStatus('loading', '💾 กำลังบันทึก...');
+  try{
+    if(!gistId){
+      var res = await fetch('https://api.github.com/gists',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+        body: JSON.stringify({description:'Code Vault Data',public:false,files:{[GIST_FILE]:{content:JSON.stringify(codes,null,2)}}})
+      });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      var created = await res.json();
+      gistId = created.id;
+      localStorage.setItem('cv_gist_id', gistId);
+      document.getElementById('s-gist').value = gistId;
+    } else {
+      var res = await fetch('https://api.github.com/gists/'+gistId,{
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+        body: JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(codes,null,2)}}})
+      });
+      if(!res.ok) throw new Error('HTTP '+res.status);
+    }
+    setStatus('ok', '✓ บันทึกแล้ว');
+  }catch(e){
+    setStatus('error', '⚠ บันทึกไม่ได้: '+e.message);
+  }
+}
+
+function triggerSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToGist, 600);
+}
+
+function manualSync(){ loadFromGist(); }
+
+function openSchema(){
+  window.location.href = 'code_vault_schema.html';
+}
+
+function downloadBackup(){
+  var data = JSON.stringify(codes);
+  var stamp = new Date().toISOString().slice(0,10);
+  var parts = [];
+  parts.push('<!doctype html><html lang="th"><head><meta charset="UTF-8">');
+  parts.push('<meta name="viewport" content="width=device-width,initial-scale=1">');
+  parts.push('<title>Code Vault — Backup '+stamp+'</title><style>');
+  parts.push('*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0d0d0d;color:#f3ede0;padding:0 1.5rem 2rem}.wrap{max-width:1100px;margin:0 auto}');
+  parts.push('.top{position:sticky;top:0;background:#0d0d0d;padding:.9rem 0;border-bottom:1px solid #473c1c;display:flex;gap:10px;align-items:center;flex-wrap:wrap}');
+  parts.push('h1{font-size:17px;font-weight:600;white-space:nowrap;background:linear-gradient(90deg,#e8c66a,#d4af37,#9a7d28);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}');
+  parts.push('.tag{font-size:11px;color:#8a8478;border:1px solid #2c2820;border-radius:8px;padding:4px 9px}');
+  parts.push('input{flex:1;min-width:160px;padding:8px 12px;border:1px solid #473c1c;border-radius:8px;background:#141414;color:#f3ede0;font-size:14px;outline:none}input:focus{border-color:#d4af37}');
+  parts.push('.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:1.1rem;align-items:start}');
+  parts.push('.card{border:1px solid #473c1c;border-radius:12px;background:linear-gradient(150deg,#1a1812,#141414);cursor:pointer;height:104px;display:flex;gap:11px;padding:14px 16px;transition:.18s}.card:hover{border-color:#d4af37;transform:translateY(-2px)}');
+  parts.push('.em{font-size:26px;flex-shrink:0}.bd{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;height:100%}');
+  parts.push('.bg{font-size:10.5px;font-weight:600;color:#e8c66a;background:rgba(212,175,55,.14);border:1px solid #473c1c;border-radius:8px;padding:2px 9px;display:inline-block;margin-bottom:6px}');
+  parts.push('.tt{font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ds{font-size:11px;color:#7a7568;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}');
+  parts.push('.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9;align-items:center;justify-content:center}.mbg.o{display:flex}');
+  parts.push('.md{background:linear-gradient(160deg,#1a1812,#121212);border:1px solid #9a7d28;border-radius:14px;padding:1.5rem;width:min(600px,94vw);max-height:88vh;overflow:auto}');
+  parts.push('.mh{display:flex;gap:10px;align-items:center;margin-bottom:1rem}.mt{font-size:15px;font-weight:600;color:#e8c66a}pre{background:#0a0a0a;border:1px solid #473c1c;border-radius:8px;padding:12px;font-size:12px;color:#e6dcc4;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}');
+  parts.push('.cp{margin-top:1rem;padding:7px 16px;border:1px solid #d4af37;border-radius:8px;background:linear-gradient(135deg,#d4af37,#b8941f);color:#1a1500;font-weight:600;cursor:pointer}.empty{text-align:center;padding:3rem;color:#6b6655}');
+  parts.push('.tl{font-size:12px;color:#a39a82;margin:1.1rem 0 .4rem;font-weight:600}.tw{border:1px solid #473c1c;border-radius:8px;overflow:auto;max-height:300px}table.tb{border-collapse:collapse;font-size:11.5px;width:max-content;min-width:100%;font-family:monospace}table.tb th,table.tb td{border:1px solid #2c2820;padding:5px 9px;text-align:left;white-space:nowrap;color:#e6dcc4;max-width:260px;overflow:hidden;text-overflow:ellipsis}table.tb th{position:sticky;top:0;background:#1e1a10;color:#e8c66a;font-weight:600}table.tb tbody tr:nth-child(even){background:rgba(212,175,55,.04)}.tf{font-size:10px;color:#9a7d28;margin-left:auto}');
+  parts.push('</style></head><body><div class="wrap"><div class="top"><h1>&#10022; Code Vault</h1><span class="tag">Backup '+stamp+' &middot; offline</span>');
+  parts.push('<input id="q" placeholder="&#128269; ค้นหา..." oninput="rd()"></div><div class="cards" id="c"></div></div>');
+  parts.push('<div class="mbg" id="mb"><div class="md"><div class="mh"><span id="me" style="font-size:28px"></span><span class="bg" id="mbd"></span><span class="mt" id="mtt"></span></div><div class="ds" id="mds" style="margin-bottom:1rem;color:#9a9382"></div><pre id="mc"></pre><div id="mtb"></div><button class="cp" id="cb" onclick="cp()">คัดลอก</button></div></div>');
+  parts.push('<script>var D='+data+';');
+  parts.push('var E=["🐣","🍯","✨","🌟","🐝","🦊","🐥","🌸","🍀","🐧","🦄","🌻","🐱","🦋","🍒","🌈","🐶","🐼","🍓","🌼","🦉","🐰","🐢","🌺","⭐","🐙","🦁","🍋","🌙","🐳","🐦","🍑","💫","🐠","🌷","🐞","🦔","🧸","🍂","🎀"];');
+  parts.push('function ef(id){var s=""+id,h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return E[h%E.length];}');
+  parts.push('function es(x){return String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}var vid=null;');
+  parts.push('function pc(t){var R=[],r=[],f="",i=0,Q=false;t=String(t).replace(/\\r\\n/g,"\\n").replace(/\\r/g,"\\n");while(i<t.length){var ch=t[i];if(Q){if(ch===\'"\'){if(t[i+1]===\'"\'){f+=\'"\';i+=2;continue;}Q=false;i++;continue;}f+=ch;i++;continue;}if(ch===\'"\'){Q=true;i++;continue;}if(ch===","){r.push(f);f="";i++;continue;}if(ch==="\\n"){r.push(f);R.push(r);r=[];f="";i++;continue;}f+=ch;i++;}if(f!==""||r.length){r.push(f);R.push(r);}return R.filter(function(x){return x.length>1||(x.length===1&&x[0].trim()!=="");});}');
+  parts.push('function rt(csv){if(!csv||!csv.trim())return"";var R=pc(csv.trim());if(!R.length)return"";var H=R[0],h=\'<div class="tl">📊 ตารางตัวอย่าง (\'+(R.length-1)+\' แถว)</div><div class="tw"><table class="tb"><thead><tr>\';for(var i=0;i<H.length;i++)h+="<th>"+es(H[i])+"</th>";h+="</tr></thead><tbody>";for(var r=1;r<R.length;r++){h+="<tr>";for(var c=0;c<H.length;c++)h+="<td>"+es(R[r][c]!==undefined?R[r][c]:"")+"</td>";h+="</tr>";}return h+"</tbody></table></div>";}');
+  parts.push('function rd(){var q=(document.getElementById("q").value||"").toLowerCase().trim(),o="",n=0;for(var i=0;i<D.length;i++){var c=D[i];if(q&&(c.name||"").toLowerCase().indexOf(q)<0&&(c.desc||"").toLowerCase().indexOf(q)<0)continue;n++;o+=\'<div class="card" onclick="ov(\\\'\'+c.id+\'\\\')"><span class="em">\'+ef(c.id)+\'</span><div class="bd"><div><div style="display:flex;align-items:center;gap:8px"><span class="bg">\'+es(c.type)+\'</span>\'+(c.table&&c.table.trim()?\'<span class="tf">📊</span>\':"")+\'</div><div class="tt">\'+es(c.name)+\'</div></div><div class="ds">\'+(c.desc?es(c.desc):"")+\'</div></div></div>\';}document.getElementById("c").innerHTML=n?o:\'<div class="empty">ไม่พบ</div>\';}');
+  parts.push('function ov(id){var f=null;for(var i=0;i<D.length;i++)if(D[i].id==id){f=D[i];break;}if(!f)return;vid=id;document.getElementById("me").textContent=ef(f.id);document.getElementById("mbd").textContent=f.type;document.getElementById("mtt").textContent=f.name;document.getElementById("mds").textContent=f.desc||"";document.getElementById("mc").textContent=f.code;document.getElementById("mtb").innerHTML=rt(f.table||"");document.getElementById("cb").textContent="คัดลอก";document.getElementById("mb").classList.add("o");}');
+  parts.push('function cp(){var f=null;for(var i=0;i<D.length;i++)if(D[i].id==vid){f=D[i];break;}if(!f)return;var b=document.getElementById("cb"),d=function(){b.textContent="คัดลอกแล้ว ✓";};if(navigator.clipboard)navigator.clipboard.writeText(f.code).then(d).catch(function(){});else{var t=document.createElement("textarea");t.value=f.code;document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(t);d();}}');
+  parts.push('document.getElementById("mb").addEventListener("click",function(e){if(e.target===this)this.classList.remove("o");});rd();');
+  parts.push('<\/script></body></html>');
+  var blob = new Blob([parts.join('')], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'code_vault_backup_'+stamp+'.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+function openSettings(){
+  document.getElementById('s-token').value = getToken();
+  document.getElementById('s-gist').value = getGistId();
+  document.getElementById('settings-bg').classList.add('open');
+}
+
+function closeSettings(){
+  document.getElementById('settings-bg').classList.remove('open');
+}
+
+function applySettings(){
+  var t = document.getElementById('s-token').value.trim();
+  var g = document.getElementById('s-gist').value.trim();
+  if(!t){ alert('กรุณาใส่ Token'); return; }
+  localStorage.setItem('cv_token', t);
+  localStorage.setItem('cv_gist_id', g);
+  closeSettings();
+  if(!g){
+    saveToGist();
+  } else {
+    loadFromGist();
+  }
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){
+  var q = document.getElementById('search').value.toLowerCase().trim();
+  var chips = document.querySelectorAll('#filters .chip');
+  chips.forEach(function(ch){
+    var t = ch.getAttribute('data-type');
+    if(t === activeType){ ch.classList.add('active'); } else { ch.classList.remove('active'); }
+  });
+  var cb = document.getElementById('clear-btn');
+  if(activeType !== 'all' || q){ cb.classList.add('visible'); } else { cb.classList.remove('visible'); }
+  var filtered = [];
+  for(var k=0;k<codes.length;k++){
+    if(activeType!=='all' && codes[k].type!==activeType) continue;
+    if(q){
+      var n=codes[k].name.toLowerCase();
+      var d=(codes[k].desc||'').toLowerCase();
+      if(n.indexOf(q)===-1 && d.indexOf(q)===-1) continue;
+    }
+    filtered.push(codes[k]);
+  }
+  document.getElementById('count').textContent = filtered.length+' snippet'+(filtered.length!==1?'s':'');
+  var el = document.getElementById('cards');
+  if(!filtered.length){el.innerHTML='<div class="empty">ไม่พบโค้ดที่ตรงกัน</div>';return;}
+  var html = '';
+  for(var k=0;k<filtered.length;k++){
+    var c=filtered[k];
+    html += '<div class="card" onclick="openView(\''+c.id+'\')">'
+      +'<span class="card-emoji">'+emojiFor(c.id)+'</span>'
+      +'<div class="card-body">'
+      +'<div>'
+      +'<div class="card-top">'
+      +'<span class="badge '+(typeMap[c.type]||'')+'">'+esc(c.type)+'</span>'
+      +(c.table&&c.table.trim()?'<span class="card-tbl-flag">📊</span>':'')
+      +'</div>'
+      +'<div class="card-title">'+esc(c.name)+'</div>'
+      +'</div>'
+      +(c.desc?'<div class="card-desc">'+esc(c.desc)+'</div>':'<div class="card-desc"></div>')
+      +'</div>'
+      +'</div>';
+  }
+  el.innerHTML = html;
+}
+
+var viewId = null;
+
+function parseCSV(text){
+  var rows=[], row=[], field='', i=0, inQ=false;
+  text = String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  while(i<text.length){
+    var ch=text[i];
+    if(inQ){
+      if(ch==='"'){ if(text[i+1]==='"'){ field+='"'; i+=2; continue; } inQ=false; i++; continue; }
+      field+=ch; i++; continue;
+    }
+    if(ch==='"'){ inQ=true; i++; continue; }
+    if(ch===','){ row.push(field); field=''; i++; continue; }
+    if(ch==='\n'){ row.push(field); rows.push(row); row=[]; field=''; i++; continue; }
+    field+=ch; i++;
+  }
+  if(field!==''||row.length){ row.push(field); rows.push(row); }
+  return rows.filter(function(r){ return r.length>1 || (r.length===1 && r[0].trim()!==''); });
+}
+
+function renderTable(csv){
+  if(!csv || !csv.trim()) return '';
+  var rows=parseCSV(csv.trim());
+  if(!rows.length) return '';
+  var head=rows[0], h='<div class="view-table-label">📊 ตารางตัวอย่าง ('+(rows.length-1)+' แถว)</div><div class="tbl-wrap"><table class="tbl"><thead><tr>';
+  for(var i=0;i<head.length;i++) h+='<th>'+esc(head[i])+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var r=1;r<rows.length;r++){
+    h+='<tr>';
+    for(var c=0;c<head.length;c++) h+='<td>'+esc(rows[r][c]!==undefined?rows[r][c]:'')+'</td>';
+    h+='</tr>';
+  }
+  h+='</tbody></table></div>';
+  return h;
+}
+
+function onCsvFile(input){
+  var f=input.files && input.files[0];
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    document.getElementById('f-table').value=e.target.result;
+    document.getElementById('f-csv-name').textContent='✓ '+f.name;
+  };
+  rd.readAsText(f);
+}
+
+function openView(id){
+  var found=null;
+  for(var k=0;k<codes.length;k++){if(codes[k].id===id){found=codes[k];break;}}
+  if(!found) return;
+  viewId = id;
+  document.getElementById('view-emoji').textContent = emojiFor(found.id);
+  var badge = document.getElementById('view-badge');
+  badge.textContent = found.type;
+  badge.className = 'badge '+(typeMap[found.type]||'');
+  document.getElementById('view-title').textContent = found.name;
+  document.getElementById('view-desc').textContent = found.desc || '';
+  document.getElementById('view-desc').style.display = found.desc ? '' : 'none';
+  document.getElementById('view-code').textContent = found.code;
+  document.getElementById('view-table').innerHTML = renderTable(found.table || '');
+  document.getElementById('view-copy-btn').textContent = 'คัดลอก';
+  document.getElementById('view-bg').classList.add('open');
+}
+
+function closeView(){
+  document.getElementById('view-bg').classList.remove('open');
+  viewId = null;
+}
+
+function copyFromView(){
+  var found=null;
+  for(var k=0;k<codes.length;k++){if(codes[k].id===viewId){found=codes[k];break;}}
+  if(!found) return;
+  var btn = document.getElementById('view-copy-btn');
+  var done = function(){ btn.textContent='คัดลอกแล้ว ✓'; setTimeout(function(){ btn.textContent='คัดลอก'; },1500); };
+  if(navigator.clipboard){ navigator.clipboard.writeText(found.code).then(done).catch(function(){ fallbackCopyText(found.code, done); }); }
+  else { fallbackCopyText(found.code, done); }
+}
+
+function fallbackCopyText(text, cb){
+  var ta=document.createElement('textarea');
+  ta.value=text; ta.style.cssText='position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+  if(cb) cb();
+}
+
+function editFromView(){
+  var id = viewId;
+  closeView();
+  openModal(id);
+}
+
+function delFromView(){
+  if(!confirm('ลบโค้ดนี้?')) return;
+  var next=[];
+  for(var k=0;k<codes.length;k++){if(codes[k].id!==viewId)next.push(codes[k]);}
+  codes=next;
+  closeView();
+  render();
+  triggerSave();
+}
+
+function onSearch(){
+  var q=document.getElementById('search').value.trim();
+  var cb=document.getElementById('clear-btn');
+  if(q||activeType!=='all'){cb.classList.add('visible');}else{cb.classList.remove('visible');}
+  render();
+}
+
+function setType(t){
+  activeType=t;
+  var cb=document.getElementById('clear-btn');
+  var q=document.getElementById('search').value.trim();
+  if(t!=='all'||q){cb.classList.add('visible');}else{cb.classList.remove('visible');}
+  render();
+}
+
+function clearFilters(){
+  activeType='all';
+  document.getElementById('search').value='';
+  document.getElementById('clear-btn').classList.remove('visible');
+  render();
+}
+
+function openModal(id){
+  editId = id;
+  document.getElementById('modal-title').textContent = id ? 'แก้ไขโค้ด' : 'เพิ่มโค้ดใหม่';
+  document.getElementById('f-name').className='';
+  document.getElementById('f-code').className='';
+  document.getElementById('f-csv-file').value='';
+  document.getElementById('f-csv-name').textContent='';
+  if(id){
+    var found = null;
+    for(var k=0;k<codes.length;k++){if(codes[k].id===id){found=codes[k];break;}}
+    if(found){
+      document.getElementById('f-name').value = found.name;
+      document.getElementById('f-type').value = found.type;
+      document.getElementById('f-desc').value = found.desc||'';
+      document.getElementById('f-code').value = found.code;
+      document.getElementById('f-table').value = found.table||'';
+    }
+  } else {
+    document.getElementById('f-name').value='';
+    document.getElementById('f-type').value='BigQuery';
+    document.getElementById('f-desc').value='';
+    document.getElementById('f-code').value='';
+    document.getElementById('f-table').value='';
+  }
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modal-bg').classList.remove('open');
+  editId=null;
+}
+
+function saveCode(){
+  var name = document.getElementById('f-name').value.trim();
+  var type = document.getElementById('f-type').value;
+  var desc = document.getElementById('f-desc').value.trim();
+  var code = document.getElementById('f-code').value.trim();
+  var table = document.getElementById('f-table').value.trim();
+  var ok = true;
+  if(!name){document.getElementById('f-name').classList.add('err');ok=false;}
+  else{document.getElementById('f-name').classList.remove('err');}
+  if(!code){document.getElementById('f-code').classList.add('err');ok=false;}
+  else{document.getElementById('f-code').classList.remove('err');}
+  if(!ok) return;
+  if(editId){
+    for(var k=0;k<codes.length;k++){
+      if(codes[k].id===editId){
+        codes[k]={id:editId,name:name,type:type,desc:desc,code:code,table:table};
+        break;
+      }
+    }
+  } else {
+    codes.unshift({id:String(Date.now()),name:name,type:type,desc:desc,code:code,table:table});
+  }
+  closeModal();
+  render();
+  triggerSave();
+}
+
+document.getElementById('view-bg').addEventListener('click',function(e){if(e.target===this)closeView();});
+document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('settings-bg').addEventListener('click',function(e){if(e.target===this)closeSettings();});
+
+loadFromGist();
+
+function updateOnline(){ var b=document.getElementById('offline-bar'); if(b) b.classList.toggle('show', !navigator.onLine); }
+window.addEventListener('online',function(){ updateOnline(); loadFromGist(); });
+window.addEventListener('offline',updateOnline);
+updateOnline();
+
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+</script>
+</body></html>

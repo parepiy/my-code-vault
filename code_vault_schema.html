@@ -1,0 +1,422 @@
+<html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Code Vault — Schema Explorer</title>
+<meta name="theme-color" content="#0d0d0d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Code Vault">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--gold:#d4af37;--gold-soft:#e8c66a;--gold-dim:#9a7d28;--bg:#0d0d0d;--surface:#161616;--border:#2c2820;--border-gold:#473c1c;--text:#f3ede0;--text-dim:#8a8478}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#f3ede0;padding:0 1.25rem 2rem;min-height:100vh}
+.wrap{max-width:1600px;margin:0 auto}
+.topbar{position:sticky;top:0;z-index:50;background:#0d0d0d;padding:calc(.7rem + env(safe-area-inset-top,0px)) 1.25rem .7rem;margin:0 -1.25rem;border-bottom:1px solid var(--border-gold)}
+.topbar-inner{max-width:1600px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h1{font-size:17px;font-weight:600;white-space:nowrap;flex-shrink:0;background:linear-gradient(90deg,#e8c66a,#d4af37,#9a7d28);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border-gold);border-radius:8px;background:#141414;color:var(--text);font-size:14px;outline:none}
+.search-wrap input::placeholder{color:#6b6655}
+.search-wrap input:focus{border-color:var(--gold)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gold-dim);font-size:14px;pointer-events:none}
+.btn{padding:8px 13px;border:1px solid var(--border-gold);border-radius:8px;background:#161616;color:var(--text);cursor:pointer;font-size:13px;white-space:nowrap;text-decoration:none;display:inline-block}
+.btn:hover{background:#201d14;border-color:var(--gold-dim)}
+.btn.active{border-color:var(--gold);background:rgba(212,175,55,0.12);color:var(--gold-soft);font-weight:600}
+.sync{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid transparent}
+.sync.ok{color:#b5d68a;background:rgba(120,160,80,.12);border-color:#3e4a2c}
+.sync.loading{color:#a39a82;background:#1a1a1a;border-color:var(--border)}
+.sync.error{color:#e08585;background:rgba(120,40,40,.15);border-color:#7a2d2d}
+.tabs{display:flex;gap:8px;margin:1rem 0 .3rem}
+.chip{padding:5px 13px;border:1px solid var(--border-gold);border-radius:20px;font-size:12px;cursor:pointer;background:#161616;color:#a39a82}
+.chip:hover{border-color:var(--gold-dim)}
+.chip.active{border-color:var(--gold);background:rgba(212,175,55,.12);color:var(--gold-soft);font-weight:600}
+.hint{font-size:11px;color:#6b6655;margin:.5rem 0 1rem}
+/* graph */
+#graph-view{display:flex;gap:14px;margin-top:.6rem}
+.gcontrols{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gc-label{font-size:12px;color:#7a7568}
+.modebtn{padding:6px 12px;border:1px solid var(--border-gold);border-radius:8px;background:#161616;color:#a39a82;cursor:pointer;font-size:12px}
+.modebtn:hover{border-color:var(--gold-dim)}
+.modebtn.active{border-color:var(--gold);background:rgba(212,175,55,.12);color:var(--gold-soft);font-weight:600}
+#entity{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--border-gold);border-radius:8px;background:#141414;color:var(--text);font-size:13px;outline:none;cursor:pointer}
+#entity:focus{border-color:var(--gold)}
+.edge-label{fill:#9a8f6f;font-size:9px;font-family:'SF Mono',monospace;pointer-events:none}
+.graph-box{flex:1;min-width:0;border:1px solid var(--border-gold);border-radius:12px;background:radial-gradient(circle at 50% 40%,#141310,#0d0d0d);overflow:hidden;position:relative}
+#svg{display:block;width:100%;height:640px;cursor:grab}
+#svg.grabbing{cursor:grabbing}
+.edge{stroke:#3a3320;stroke-width:1}
+.edge.hi{stroke:var(--gold);stroke-width:2}
+.edge.dim{stroke:#241f14}
+.node circle{fill:#1e1a10;stroke:var(--gold-dim);stroke-width:1.5;cursor:pointer;transition:fill .15s}
+.node.hi circle{fill:#3a2f12;stroke:var(--gold);stroke-width:2.5}
+.node.dim{opacity:.25}
+.node text{fill:#d8cfb8;font-size:10px;pointer-events:none;font-family:-apple-system,sans-serif}
+.node:hover circle{fill:#2a2412;stroke:var(--gold)}
+.node.center circle{fill:#3a2f12;stroke:var(--gold);stroke-width:2.5;r:12}
+.node.center text{fill:var(--gold-soft);font-weight:700;font-size:11.5px}
+.node.center.col circle{fill:#2a2412}
+.joinbtn{margin-top:7px;font-size:10.5px;padding:4px 9px;border:1px solid var(--border-gold);border-radius:6px;background:#161616;color:var(--gold-soft);cursor:pointer}
+.joinbtn:hover{border-color:var(--gold);background:#201d14}
+.detail{width:340px;flex-shrink:0;border:1px solid var(--border-gold);border-radius:12px;background:#141310;padding:1rem;max-height:640px;overflow:auto}
+.detail h2{font-size:15px;color:var(--gold-soft);margin-bottom:.2rem;display:flex;align-items:center;gap:8px}
+.detail .sub{font-size:11px;color:#7a7568;margin-bottom:.9rem}
+.sec{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold-dim);margin:1rem 0 .5rem;font-weight:600}
+.col-pill{display:inline-block;font-size:11px;font-family:'SF Mono',monospace;background:#1a1710;border:1px solid var(--border);border-radius:6px;padding:3px 8px;margin:0 4px 4px 0;color:#d8cfb8}
+.col-pill.shared{border-color:var(--gold-dim);color:var(--gold-soft);background:rgba(212,175,55,.08)}
+.conn{border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer}
+.conn:hover{border-color:var(--gold-dim);background:#1a1710}
+.conn-name{font-size:12px;color:var(--text);font-weight:600;margin-bottom:3px}
+.conn-keys{font-size:10.5px;color:var(--gold-soft);font-family:'SF Mono',monospace}
+.empty-detail{color:#6b6655;font-size:12px;text-align:center;padding:2rem 0}
+/* tables view */
+.tbl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:.6rem}
+.tcard{border:1px solid var(--border-gold);border-radius:12px;background:linear-gradient(150deg,#1a1812,#141414);padding:14px 16px}
+.tcard h3{font-size:13px;color:var(--gold-soft);margin-bottom:2px;display:flex;align-items:center;gap:7px}
+.tcard .meta{font-size:10.5px;color:#6b6655;margin-bottom:9px}
+.empty{text-align:center;padding:3rem;color:#6b6655;font-size:13px}
+.stat{font-size:11px;color:#7a7568;margin-bottom:.4rem}
+.stat b{color:var(--gold-soft)}
+.legend{position:absolute;bottom:10px;left:12px;font-size:10px;color:#6b6655;background:rgba(13,13,13,.7);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+.offline-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#2a2412;border:1px solid var(--gold-dim);color:var(--gold-soft);font-size:12px;padding:8px 16px;border-radius:20px;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.5);display:none;white-space:nowrap}
+.offline-bar.show{display:block}
+@media (max-width:768px){ .search-wrap input,#entity{font-size:16px} }
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <h1>🔗 Schema Explorer</h1>
+  <div class="search-wrap"><span class="search-icon">🔍</span><input id="search" placeholder="ค้นหาตาราง หรือ คอลัมน์..." oninput="onSearch()"></div>
+  <span id="sync" class="sync loading">⏳</span>
+  <a class="btn" id="back-link" href="#">← Code Vault</a>
+</div></div>
+<div class="wrap">
+  <div class="tabs">
+    <div class="chip active" id="tab-graph" onclick="setTab('graph')">🕸 กราฟความสัมพันธ์</div>
+    <div class="chip" id="tab-tables" onclick="setTab('tables')">📋 ตาราง & คอลัมน์</div>
+  </div>
+  <div class="hint" id="hint"></div>
+
+  <div id="graph-view">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+      <div class="gcontrols">
+        <span class="gc-label">ดูตาม</span>
+        <button class="modebtn active" id="mode-table" onclick="setMode('table')">📁 ตาราง</button>
+        <button class="modebtn" id="mode-column" onclick="setMode('column')">🔑 คอลัมน์</button>
+        <select id="entity" onchange="onEntityChange()"></select>
+      </div>
+      <div class="graph-box">
+        <svg id="svg"></svg>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+    <div class="detail" id="detail"><div class="empty-detail">เลือกตารางหรือคอลัมน์ด้านบนเพื่อดูการเชื่อมต่อ</div></div>
+  </div>
+
+  <div id="tables-view" style="display:none"><div class="tbl-grid" id="tbl-grid"></div></div>
+</div>
+<div class="offline-bar" id="offline-bar">⚡ ออฟไลน์ — กำลังแสดงข้อมูลที่บันทึกไว้ล่าสุด</div>
+
+<script>
+var GIST_FILE='code_vault.json';
+var DEFAULT_GIST_ID='7b0ed7d1cc452ad90fb4fa638a4093ef';
+function getToken(){ return localStorage.getItem('cv_token')||''; }
+function getGistId(){ return localStorage.getItem('cv_gist_id')||DEFAULT_GIST_ID; }
+function setSync(s,m){ var e=document.getElementById('sync'); e.className='sync '+s; e.textContent=m; }
+
+// back link to main page
+document.getElementById('back-link').href='index.html';
+
+var codes=[], tables=[], links=[], tab='graph', colIndex={}, colDisplay={};
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---- CSV header parsing (first line only) ----
+function csvHeaders(text){
+  if(!text||!text.trim()) return [];
+  var line='', i=0, inQ=false, t=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  while(i<t.length){ var ch=t[i]; if(ch==='\n'&&!inQ) break; if(ch==='"'){ inQ=!inQ; } line+=ch; i++; }
+  var out=[], f='', q=false;
+  for(var j=0;j<line.length;j++){ var c=line[j];
+    if(q){ if(c==='"'){ if(line[j+1]==='"'){ f+='"'; j++; } else q=false; } else f+=c; }
+    else { if(c==='"') q=true; else if(c===','){ out.push(f); f=''; } else f+=c; }
+  }
+  out.push(f);
+  return out.map(function(x){return x.trim();}).filter(function(x){return x;});
+}
+
+// ---- SQL column fallback ----
+function normCol(c){ return String(c).toLowerCase().replace(/[`"\[\]]/g,'').trim(); }
+function sqlColumns(sql){
+  if(!sql) return [];
+  var s=sql.replace(/--[^\n]*/g,' ').replace(/\/\*[\s\S]*?\*\//g,' ');
+  var set={};
+  // qualified refs alias.col
+  var re=/[`"\[]?\b([a-zA-Z_]\w*)[`"\]]?\.[`"\[]?([a-zA-Z_]\w*)[`"\]]?/g, m;
+  while((m=re.exec(s))){ var col=m[2]; if(col && col!=='*') set[normCol(col)]=col; }
+  // SELECT ... FROM  output names / aliases
+  var sm=/\bselect\b([\s\S]*?)\bfrom\b/i.exec(s);
+  if(sm){
+    var seg=sm[1], depth=0, cur='', items=[];
+    for(var i=0;i<seg.length;i++){ var ch=seg[i]; if(ch==='(')depth++; else if(ch===')')depth--; if(ch===','&&depth===0){ items.push(cur); cur=''; } else cur+=ch; }
+    items.push(cur);
+    items.forEach(function(it){
+      it=it.trim(); if(!it||it==='*') return;
+      var asm=/\bas\s+[`"\[]?([a-zA-Z_]\w*)[`"\]]?\s*$/i.exec(it);
+      if(asm){ set[normCol(asm[1])]=asm[1]; return; }
+      var idm=/([a-zA-Z_]\w*)\s*$/.exec(it);
+      if(idm && !/[()]/.test(it)){ set[normCol(idm[1])]=idm[1]; }
+    });
+  }
+  var arr=[]; for(var k in set) arr.push(set[k]); return arr;
+}
+
+// ---- build model ----
+function build(){
+  tables=[]; links=[];
+  for(var i=0;i<codes.length;i++){
+    var c=codes[i];
+    var cols=csvHeaders(c.table||'');
+    var source= cols.length? 'csv':'sql';
+    if(!cols.length) cols=sqlColumns(c.code||'');
+    // dedupe by normalized name, keep display
+    var seen={}, disp=[];
+    cols.forEach(function(col){ var n=normCol(col); if(n && !seen[n]){ seen[n]=col; disp.push(col); } });
+    tables.push({ id:c.id, name:c.name, type:c.type, source:source, cols:disp, norm:Object.keys(seen) });
+  }
+  // column index: normalized column -> [table indices]
+  colIndex={}; colDisplay={};
+  tables.forEach(function(t,ti){ t.norm.forEach(function(nn,k){ (colIndex[nn]=colIndex[nn]||[]).push(ti); if(!colDisplay[nn]) colDisplay[nn]=t.cols[k]; }); });
+  // links: shared normalized columns between tables
+  for(var a=0;a<tables.length;a++){
+    for(var b=a+1;b<tables.length;b++){
+      var shared=[];
+      var sb={}; tables[b].norm.forEach(function(n){sb[n]=1;});
+      tables[a].norm.forEach(function(n){ if(sb[n]) shared.push(n); });
+      if(shared.length) links.push({ a:a, b:b, cols:shared });
+    }
+  }
+}
+
+function buildJoin(a,b,cols){
+  var on=cols.map(function(c){return 'a.'+c+' = b.'+c;}).join('\n  AND ');
+  return 'SELECT *\nFROM `'+a+'` a\nJOIN `'+b+'` b\n  ON '+on;
+}
+function copyJoin(btn,ai,bi){
+  var cols=[]; neighborsOf(ai).forEach(function(nb){ if(nb.t===bi) cols=nb.cols; });
+  var sql=buildJoin(tables[ai].name,tables[bi].name,cols);
+  var done=function(){ var o=btn.textContent; btn.textContent='✓ คัดลอกแล้ว'; setTimeout(function(){btn.textContent=o;},1500); };
+  if(navigator.clipboard) navigator.clipboard.writeText(sql).then(done).catch(function(){ done(); });
+  else done();
+}
+
+function neighborsOf(ti){
+  var res=[];
+  links.forEach(function(l){ if(l.a===ti) res.push({t:l.b,cols:l.cols}); else if(l.b===ti) res.push({t:l.a,cols:l.cols}); });
+  res.sort(function(x,y){return y.cols.length-x.cols.length;});
+  return res;
+}
+
+// ---- radial graph ----
+var W=900,H=620,mode='table',centerT=null,centerCol=null,SVGNS='http://www.w3.org/2000/svg';
+function shortName(s){ return s.length>24? s.slice(0,23)+'…':s; }
+
+function populateEntity(){
+  var sel=document.getElementById('entity'); sel.innerHTML='';
+  if(mode==='table'){
+    var arr=tables.map(function(t,i){return {i:i,name:t.name,deg:neighborsOf(i).length};});
+    arr.sort(function(a,b){return b.deg-a.deg || a.name.localeCompare(b.name);});
+    arr.forEach(function(o){ var op=document.createElement('option'); op.value='t'+o.i; op.textContent=o.name+' — เชื่อม '+o.deg+' ตาราง'; sel.appendChild(op); });
+    if(centerT==null && arr.length) centerT=arr[0].i;
+    if(centerT!=null) sel.value='t'+centerT;
+  } else {
+    var cols=[];
+    for(var n in colIndex){ if(colIndex[n].length>1) cols.push({n:n,c:colIndex[n].length,d:colDisplay[n]}); }
+    cols.sort(function(a,b){return b.c-a.c || a.d.localeCompare(b.d);});
+    cols.forEach(function(o){ var op=document.createElement('option'); op.value='c'+o.n; op.textContent=o.d+' — มีใน '+o.c+' ตาราง'; sel.appendChild(op); });
+    if((centerCol==null || !colIndex[centerCol] || colIndex[centerCol].length<2) && cols.length) centerCol=cols[0].n;
+    if(centerCol) sel.value='c'+centerCol;
+  }
+}
+
+function onEntityChange(){
+  var v=document.getElementById('entity').value;
+  if(v.charAt(0)==='t'){ centerT=+v.slice(1); mode='table'; } else { centerCol=v.slice(1); mode='column'; }
+  renderGraph(); renderDetail();
+}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('mode-table').classList.toggle('active',m==='table');
+  document.getElementById('mode-column').classList.toggle('active',m==='column');
+  populateEntity(); renderGraph(); renderDetail();
+}
+
+function focusTable(ti){
+  mode='table'; centerT=ti;
+  document.getElementById('mode-table').classList.add('active');
+  document.getElementById('mode-column').classList.remove('active');
+  populateEntity(); renderGraph(); renderDetail();
+}
+
+function mkNode(x,y,label,cls,onclick){
+  var g=document.createElementNS(SVGNS,'g'); g.setAttribute('class',cls); g.setAttribute('transform','translate('+x+','+y+')'); g.style.cursor='pointer';
+  var r=cls.indexOf('center')>=0?12:8;
+  var ci=document.createElementNS(SVGNS,'circle'); ci.setAttribute('r',r); g.appendChild(ci);
+  var tx=document.createElementNS(SVGNS,'text'); tx.setAttribute('x',0); tx.setAttribute('y',r+12); tx.setAttribute('text-anchor','middle'); tx.textContent=label; g.appendChild(tx);
+  if(onclick) g.addEventListener('click',onclick);
+  return g;
+}
+
+function renderGraph(){
+  var svg=document.getElementById('svg'); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  if(!tables.length){ var tz=document.createElementNS(SVGNS,'text'); tz.setAttribute('x',W/2); tz.setAttribute('y',H/2); tz.setAttribute('text-anchor','middle'); tz.setAttribute('fill','#6b6655'); tz.textContent='ยังไม่มีข้อมูล'; svg.appendChild(tz); return; }
+  var MAX=24;
+  var leaves=[], centerLabel='', centerCls='node center', total=0, capped=false;
+  if(mode==='table'){
+    if(centerT==null) return;
+    centerLabel=shortName(tables[centerT].name);
+    var nbs=neighborsOf(centerT); total=nbs.length; // already sorted by shared-column count desc
+    leaves=nbs.map(function(nb){ return {label:shortName(tables[nb.t].name), edge:nb.cols, tIdx:nb.t}; });
+    if(leaves.length>MAX){ leaves=leaves.slice(0,MAX); capped=true; }
+    document.getElementById('legend').textContent='📁 '+tables[centerT].name+' • เชื่อมได้ '+total+' ตาราง'+(capped?' (แสดง '+MAX+' อันดับแรกที่มีคอลัมน์ร่วมมากสุด)':'')+' • คลิกตารางรอบๆ เพื่อเจาะดูต่อ';
+  } else {
+    if(!centerCol||!colIndex[centerCol]) return;
+    centerLabel='🔑 '+colDisplay[centerCol]; centerCls='node center col';
+    var idxs=colIndex[centerCol]; total=idxs.length;
+    leaves=idxs.map(function(ti){ return {label:shortName(tables[ti].name), edge:null, tIdx:ti}; });
+    if(leaves.length>MAX){ leaves=leaves.slice(0,MAX); capped=true; }
+    document.getElementById('legend').textContent='🔑 '+colDisplay[centerCol]+' • มีใน '+total+' ตาราง'+(capped?' (แสดง '+MAX+' ตาราง — ดูทั้งหมดในแท็บ ตาราง & คอลัมน์)':'')+' — join กันได้ทั้งหมด';
+  }
+  var cx=W/2, cy=H/2, n=leaves.length, R=Math.min(W,H)*(n>16?0.43:0.34);
+  var showLabels = n<=12; // edge-key labels only when few enough to be readable
+  var eg=document.createElementNS(SVGNS,'g'); svg.appendChild(eg);
+  var P=[];
+  for(var i=0;i<n;i++){
+    var ang=(i/Math.max(n,1))*Math.PI*2 - Math.PI/2;
+    var lx=cx+R*Math.cos(ang), ly=cy+R*Math.sin(ang); P.push({x:lx,y:ly});
+    var ln=document.createElementNS(SVGNS,'line'); ln.setAttribute('x1',cx); ln.setAttribute('y1',cy); ln.setAttribute('x2',lx); ln.setAttribute('y2',ly); ln.setAttribute('class','edge hi'); eg.appendChild(ln);
+    if(showLabels && leaves[i].edge && leaves[i].edge.length){
+      var lbl=leaves[i].edge.slice(0,2).join(', ')+(leaves[i].edge.length>2?' +'+(leaves[i].edge.length-2):'');
+      var tl=document.createElementNS(SVGNS,'text'); tl.setAttribute('x',cx+(lx-cx)*0.5); tl.setAttribute('y',cy+(ly-cy)*0.5); tl.setAttribute('text-anchor','middle'); tl.setAttribute('class','edge-label'); tl.textContent=lbl; eg.appendChild(tl);
+    }
+  }
+  for(var i=0;i<n;i++){ (function(i){
+    var g=mkNode(P[i].x,P[i].y,leaves[i].label,'node',function(){ focusTable(leaves[i].tIdx); });
+    if(leaves[i].edge && leaves[i].edge.length){ var ti=document.createElementNS(SVGNS,'title'); ti.textContent='🔑 '+leaves[i].edge.join(', '); g.appendChild(ti); }
+    svg.appendChild(g);
+  })(i); }
+  svg.appendChild(mkNode(cx,cy,centerLabel,centerCls,function(){ renderDetail(); }));
+}
+
+function renderDetail(){
+  var d=document.getElementById('detail');
+  if(mode==='column'){
+    if(!centerCol||!colIndex[centerCol]){ d.innerHTML='<div class="empty-detail">เลือกคอลัมน์</div>'; return; }
+    var ts=colIndex[centerCol];
+    var hh='<h2>🔑 '+esc(colDisplay[centerCol])+'</h2><div class="sub">มีใน '+ts.length+' ตาราง • join กันได้ทั้งหมดบนคอลัมน์นี้</div>';
+    hh+='<div class="sec">ตารางที่มีคอลัมน์นี้</div>';
+    ts.forEach(function(ti){ hh+='<div class="conn"><div class="conn-name" onclick="focusTable('+ti+')">'+esc(tables[ti].name)+'</div></div>'; });
+    d.innerHTML=hh; return;
+  }
+  if(centerT==null){ d.innerHTML='<div class="empty-detail">เลือกตาราง</div>'; return; }
+  var t=tables[centerT], nbs=neighborsOf(centerT);
+  var sharedSet={}; nbs.forEach(function(nb){ nb.cols.forEach(function(c){sharedSet[c]=1;}); });
+  var h='<h2>'+esc(t.name)+'</h2><div class="sub">'+esc(t.type)+' • '+t.cols.length+' คอลัมน์ • '+(t.source==='csv'?'จาก CSV':'จาก SQL')+'</div>';
+  h+='<div class="sec">🔗 เชื่อมต่อได้ ('+nbs.length+')</div>';
+  if(!nbs.length) h+='<div class="stat">ไม่พบตารางที่มีคอลัมน์ร่วมกัน</div>';
+  nbs.forEach(function(nb){
+    h+='<div class="conn"><div class="conn-name" onclick="focusTable('+nb.t+')">'+esc(tables[nb.t].name)+'</div><div class="conn-keys">🔑 '+nb.cols.map(esc).join(', ')+'</div><button class="joinbtn" onclick="copyJoin(this,'+centerT+','+nb.t+')">📋 คัดลอก JOIN</button></div>';
+  });
+  h+='<div class="sec">📋 คอลัมน์ ('+t.cols.length+')</div><div>';
+  t.cols.forEach(function(c){ var sh=sharedSet[normCol(c)]; h+='<span class="col-pill'+(sh?' shared':'')+'">'+esc(c)+'</span>'; });
+  h+='</div>';
+  d.innerHTML=h;
+}
+
+function renderTables(){
+  var q=(document.getElementById('search').value||'').toLowerCase().trim();
+  var grid=document.getElementById('tbl-grid'), h='';
+  var list=tables.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  var shown=0;
+  list.forEach(function(t){
+    var ti=tables.indexOf(t);
+    if(q && t.name.toLowerCase().indexOf(q)<0 && !t.norm.some(function(n){return n.indexOf(q)>=0;})) return;
+    shown++;
+    var nbs=neighborsOf(ti);
+    h+='<div class="tcard"><h3>'+esc(t.name)+'</h3><div class="meta">'+esc(t.type)+' • '+t.cols.length+' คอลัมน์ • เชื่อมต่อได้ '+nbs.length+' ตาราง • '+(t.source==='csv'?'CSV':'SQL')+'</div><div>';
+    t.cols.forEach(function(c){ h+='<span class="col-pill">'+esc(c)+'</span>'; });
+    h+='</div></div>';
+  });
+  grid.innerHTML= shown? h : '<div class="empty">ไม่พบตารางที่ตรงกัน</div>';
+}
+
+function setTab(t){
+  tab=t;
+  document.getElementById('tab-graph').classList.toggle('active',t==='graph');
+  document.getElementById('tab-tables').classList.toggle('active',t==='tables');
+  document.getElementById('graph-view').style.display= t==='graph'?'flex':'none';
+  document.getElementById('tables-view').style.display= t==='tables'?'block':'none';
+  if(t==='tables') renderTables(); else { populateEntity(); renderGraph(); renderDetail(); }
+}
+
+function focusColumn(nn){
+  mode='column'; centerCol=nn;
+  document.getElementById('mode-column').classList.add('active');
+  document.getElementById('mode-table').classList.remove('active');
+  populateEntity(); renderGraph(); renderDetail();
+}
+
+function onSearch(){
+  var q=(document.getElementById('search').value||'').toLowerCase().trim();
+  if(tab==='tables'){ renderTables(); return; }
+  if(!q) return;
+  // 1) exact column name -> column mode (so "barcode" shows the barcode key, not a table named ...Barcode)
+  if(colIndex[q]){ if(colIndex[q].length>1) focusColumn(q); else focusTable(colIndex[q][0]); return; }
+  // 2) table name match
+  for(var i=0;i<tables.length;i++){ if(tables[i].name.toLowerCase().indexOf(q)>=0){ focusTable(i); return; } }
+  // 3) column substring -> the one shared by the most tables
+  var best=null;
+  for(var n in colIndex){ if(n.indexOf(q)>=0){ if(!best || colIndex[n].length>colIndex[best].length) best=n; } }
+  if(best){ if(colIndex[best].length>1) focusColumn(best); else focusTable(colIndex[best][0]); }
+}
+
+function refreshHint(){
+  document.getElementById('hint').textContent = tables.length+' ตาราง • '+links.length+' การเชื่อมต่อที่เป็นไปได้ (อิงคอลัมน์ที่ใช้ชื่อร่วมกัน)';
+}
+
+async function load(){
+  var token=getToken(), gid=getGistId();
+  if(!token){ setSync('error','⚠ ยังไม่ได้ตั้งค่า token — เปิด Code Vault แล้วกด ⚙'); return; }
+  setSync('loading','⏳ กำลังโหลด...');
+  try{
+    var res=await fetch('https://api.github.com/gists/'+gid,{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    var data=await res.json();
+    var f=data.files&&data.files[GIST_FILE];
+    codes= f&&f.content? JSON.parse(f.content):[];
+    try{ localStorage.setItem('cv_cache', JSON.stringify(codes)); }catch(_){}
+    build(); refreshHint(); populateEntity();
+    if(tab==='graph'){ renderGraph(); renderDetail(); } else renderTables();
+    setSync('ok','✓ '+codes.length+' snippets');
+  }catch(e){
+    var cached=null; try{ cached=localStorage.getItem('cv_cache'); }catch(_){}
+    if(cached){ try{ codes=JSON.parse(cached); build(); refreshHint(); populateEntity(); if(tab==='graph'){ renderGraph(); renderDetail(); } else renderTables(); setSync('ok','⚡ ออฟไลน์ — ข้อมูลล่าสุด'); return; }catch(_){} }
+    setSync('error','⚠ โหลดไม่ได้: '+e.message);
+  }
+}
+
+load();
+
+function updateOnline(){ var b=document.getElementById('offline-bar'); if(b) b.classList.toggle('show', !navigator.onLine); }
+window.addEventListener('online',function(){ updateOnline(); load(); });
+window.addEventListener('offline',updateOnline);
+updateOnline();
+
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+</script>
+</body></html>
